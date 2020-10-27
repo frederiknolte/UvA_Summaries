@@ -3,14 +3,15 @@
 	\item Previously: fixed basis function $\bm{\phi}(\bm{x}) = \left(\phi_0\left(\bm{x}\right), \phi_1\left(\bm{x}\right), ..., \phi_M\left(\bm{x}\right)\right)^T$
 	\item Neural networks: Create flexible non-linear features and learn them. 
 	\begin{itemize}
-		\item Basis function with extra parameters: $\phi_m\left(\bm{x},\bm{w}_m^{(1)}\right) = h\left(\left(\bm{w}_m^{(1)}\right)^T \bm{x}\right) = h\left(\sum\limits_{d=0}^{D}w_{md}^{(1)}\right)$ 
-		\item Note that $\bm{x}_n = \left(1, x_{n0},...,x_{nD}\right)^T\Rightarrow \bm{x}_n \in \mathbb{R}^D$
+		\item Basis function with extra parameters: $\phi_m\left(\bm{x},\bm{w}_m^{(1)}\right) = h\left(\left(\bm{w}_m^{(1)}\right)^T \bm{x}\right) = h\left(\sum\limits_{d=0}^{D}w_{md}^{(1)}x_d\right)$ 
+		\item Note that $\bm{x}_n = \left(1, x_{n1},...,x_{nD}\right)^T\Rightarrow \bm{x}_n \in \mathbb{R}^{D+1}$
 		\item $h$ is the non-linear activation function
+		\item In the following, biases are absorbed into the weight matrices
 	\end{itemize}
 	\item We can define regression for a one-layer neural network:
 	\begin{equation*}
 		\begin{split}
-			y\left(\bm{x}, \bm{W}^{(1)}, \bm{w}^{(2)}\right) & = \sum\limits_{m=0}^{M} w_m^{(2)} h\left(\sum\limits_{d=0}^{D}w_{md}^{(1)}\right) \\
+			y\left(\bm{x}, \bm{W}^{(1)}, \bm{w}^{(2)}\right) & = \sum\limits_{m=0}^{M} w_m^{(2)} h\left(\sum\limits_{d=0}^{D}w_{md}^{(1)}x_d\right) \\
 			& = \left(\bm{w}^{(2)}\right)^T h\left(\bm{W}^{(1)} \bm{x}\right) \text{\hspace{5mm}where\hspace{5mm}} \bm{W}^{(1)} = \left(\begin{array}{cccc}
 			\mid & \mid & \dots & \mid\\
 			\bm{w}_0^{(1)} & \bm{w}_1^{(1)} & \dots & \bm{w}_D^{(1)}\\
@@ -19,7 +20,7 @@
 		\end{split}
 	\end{equation*}
 	\item The same way, we can adjust a network for classification:
-	$$y\left(\bm{x}, \bm{W}^{(1)}, \bm{w}^{(2)}\right) = f\left(\sum\limits_{m=0}^{M} w_m^{(2)} h\left(\sum\limits_{d=0}^{D}w_{md}^{(1)}\right)\right) = f\left(\left(\bm{w}^{(2)}\right)^T h\left(\bm{W}^{(1)} \bm{x}\right)\right)$$
+	$$y\left(\bm{x}, \bm{W}^{(1)}, \bm{w}^{(2)}\right) = f\left(\sum\limits_{m=0}^{M} w_m^{(2)} h\left(\sum\limits_{d=0}^{D}w_{md}^{(1)}x_d\right)\right) = f\left(\left(\bm{w}^{(2)}\right)^T h\left(\bm{W}^{(1)} \bm{x}\right)\right)$$
 	where $f$ is sigmoid for binary and softmax for multi-class classification (then $\bm{w}^{(2)}$ is $K\times M$ matrix)
 \end{itemize}
 \subsection{Feed-forward Network Functions}
@@ -30,10 +31,10 @@
 		\caption{Illustration of a multilayer perceptron (2 layers).}
 		\label{img:neural_networks_overview}
 	\end{figure}
-	\item Input are $D+1$ units whereas $x_0=1$ is the bias
-	\item First layer with $M\times D$ weight matrix $\bm{W}^{(1)}$ $\Rightarrow$ $M$ activations $a_m = \sum\limits_{d=0}^{D} w_{md}^{(1)} x_{d}$ and bias $h^{(1)}(a_0)=1$
+	\item Input are $D+1$ units where $x_0=1$ is the bias
+	\item First layer with $M\times D+1$ weight matrix $\bm{W}^{(1)}$ $\Rightarrow$ $M$ activations $a_m = \sum\limits_{d=0}^{D} w_{md}^{(1)} x_{d}$ and bias $h^{(1)}(a_0)=1$
 	\item We apply an activation function on these activations to get the hidden units: $z_m = h^{(1)}(a_m)$ where $z_0=1$
-	\item Second layer with $K\times M$ weight matrix $\bm{W}^{(2)}$ $\Rightarrow$ $K$ output units $y_k = h^{(2)}\left(\sum\limits_{m=0}^{M} w_{km}^{(2)}z_m\right)$
+	\item Second layer with weight matrix $\bm{W}^{(2)}$ $\Rightarrow$ $K$ output units $y_k = h^{(2)}\left(\sum\limits_{m=0}^{M} w_{km}^{(2)}z_m\right)$
 	\item In conclusion, a output unit $y_k$ is calculated as follows:
 	$$y_k\left(\bm{x}, \bm{W}^{(1)}, \bm{W}^{(2)}\right) = h^{(2)}\left(\sum\limits_{m=0}^{M} w_{km}^{(2)}\cdot h^{(1)}\left(\sum\limits_{d=0}^{D} w_{md}^{(1)}x_{d}\right)\right)$$
 	\item Alternative notation: $y_k = h^{(2)} \circ \bm{a}^{(2)} \circ h^{(1)} \circ \bm{a}^{(1)} (\bm{x})$
@@ -48,7 +49,7 @@
 \subsubsection{Universal approximator}
 \begin{itemize}
 	\item Let $f$ by any continuous function on a compact area of $\mathbb{R}^{D}$ and $h$ any fixed analytic function which is not polynomial (e.g. logistic function, tanh function, ...). Given any small number $\epsilon > 0$ of an acceptable error, we can find a number $M$ and weights $w_{m}^{(2)}$ and $w_{md}^{(1)}\in \mathbb{R}$ such that:
-	$$\left|f(\bm{x}) - y\left(\bm{x}, \bm{W}^{(1)}, \bm{w}^{(2)}\right)\right| < \epsilon$$
+	$$\left|f(\bm{x}) - y\left(\bm{x}, \bm{W}^{(1)}, \bm{w}^{(2)}\right)\right| < \epsilon \Longleftrightarrow  \left|f(\bm{x}) - \sum_{m=0}^{M} w_m^{(2)} h \left( \sum_{d=0}^{D} w_{md}^{(1)} x_d \right) \right| < \epsilon$$
 	with $y$ as two-layer NN
 	\item For smaller $\epsilon$ we need more hidden units $\Rightarrow$ larger $M$
 	\item We may also take deeper networks that are usually capable to approximate more complex functions with less units
@@ -69,7 +70,7 @@
 	\item Data input $\bm{x}_n \in \mathbb{R}^{D}$ with continuous target $t_n \in \mathbb{R}$
 	\item Single real-valued target $\to$ Single output unit with identity activation function $y\left(\bm{x}, \bm{w}\right) = a^{\text{out}}$
 	\item Derive loss function by maximum likelihood:
-	$$E(\bm{w}) = -\ln p\left(\bm{t}|\bm{X}, \bm{w}\right) = \frac{\beta}{2}\sum\limits_{n=1}^{N}\left\{y(\bm{x}_n, \bm{w}) - t_n\right\}^2 - \frac{N}{2}\ln\beta + \frac{N}{2}\ln 2\pi $$
+	$$E(\bm{w}) = -\ln p\left(\bm{t}|\bm{X}, \bm{w}, \beta \right) = \frac{\beta}{2}\sum\limits_{n=1}^{N}\left\{y(\bm{x}_n, \bm{w}) - t_n\right\}^2 - \frac{N}{2}\ln\beta + \frac{N}{2}\ln 2\pi $$
 	$$\text{equivalent to minimizing } E(\bm{w})=\frac{1}{2}\sum\limits_{n=1}^{N}\left\{y(\bm{x}_n, \bm{w}) - t_n\right\}^2$$
 \end{itemize}
 \subsubsection{Network training for binary classification}
@@ -118,13 +119,13 @@
 	\item The second part of the derivate is just $\frac{\partial a_{j}^{(l)}}{\partial w_{ji}^{(l)}}=z_{i}^{(l-1)}$, the first one we define as $\delta_j^{(l)}\equiv \frac{\partial E_n}{\partial a_j^{(l)}}$
 	\item So, our derivate is $\frac{\partial E_n}{\partial w_{ji}^{(l)}}=\delta_j^{(l)}z_{i}^{(l-1)}$
 	\item $a_j^{(l)}$ effects the error only by its following units $a_k^{(l+1)}\Rightarrow \delta_j^{(l)}=\sum_{k}\frac{\partial E_n}{\partial a_k^{(l+1)}}\frac{\partial a_k^{(l+1)}}{a_j^{(l)}} = \sum_{k}\delta_{k}^{(l+1)}\frac{\partial a_k^{(l+1)}}{a_j^{(l)}}$
-	\item As $a_j^{(l)}$ effects $a_k^{(l+1)}$ only by the weight $w_{kj}^{(l+1)}$, the derivate is $\frac{\partial a_k^{(l+1)}}{a_j^{(l)}}=w_{kj}^{(l+1)}h^{(l)'} \left(a_{j}^{(l)}\right)$
+	\item As $a_j^{(l)}$ effects $a_k^{(l+1)}$ only by the weight $w_{kj}^{(l+1)}$, the derivate is $\frac{\partial a_k^{(l+1)}}{a_j^{(l)}}=w_{kj}^{(l+1)} \dfrac{\partial h^{(l)} \left(a_{j}^{(l)}\right)}{\partial a_{j}^{(l)}}$
 	\item Note that we need to be careful with skip connections
 	\item Overall, backpropagation can be summarized in three steps:
 	\begin{enumerate}
 		\item Compute $\delta_k$ for all output units
 		\item Compute $\delta_j$ for all hidden units through backpropagation:
-		$$\delta_j^{(l)} = h^{(l)'}\left(a_j^{(l)}\right)\sum\limits_{k}\delta_k^{(l+1)}w_{kj}^{(l+1)}$$
+		$$\delta_j^{(l)} = \dfrac{\partial h^{(l)}\left(a_j^{(l)}\right)}{\partial a_j^{(l)}}\sum\limits_{k}\delta_k^{(l+1)}w_{kj}^{(l+1)}$$
 		\item Compute derivatives $\frac{\partial E_n}{\partial w_{ji}^{(l)}}=\delta_j^{(l)}z_{i}^{(l-1)}$
 		\item Apply iterative weight update: 
 		$w_{ji}^{(l)(\tau+1)} = w_{ji}^{(l)(\tau)}-\eta \delta_j^{(l)}z_{i}^{(l-1)}$

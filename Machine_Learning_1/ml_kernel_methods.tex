@@ -3,7 +3,7 @@
 	\item Standard parametric models have either fixed basis functions (like linear regression or linear classification models) or learnable basis functions like in neural networks. The training points are solely used to optimize the parameters $\bm{w}$, and all further predictions are based on these optimal parameters
 	\item In contrast, kernel methods keep the training data points and also use them (or a subset) during prediction
 	\item The predictions are based on a linear combination of the kernel function evaluated on the training data points:
-	$$y(\bm{x}) = \sum\limits_{n=1}^{N} \alpha_n k\left(\bm{x}, \bm{x}'\right)$$
+	$$y(\bm{x}) = \sum\limits_{n=1}^{N} \alpha_n k\left(\bm{x}, \bm{x}_n \right)$$
 	\item For linear models with fixed basis functions, the kernel is:
 	$$k(\bm{x},\bm{x}') = \bm{\phi}(\bm{x})^T\bm{\phi}(\bm{x}')$$
 	\item The kernel measures \textit{similarity} between $\bm{x}$ and $\bm{x}'$ in features space defined by $\phi(x)$. Thus, it is symmetric: $$k(\bm{x},\bm{x}')=k(\bm{x}',\bm{x})$$
@@ -16,14 +16,14 @@
 	\end{itemize}
 	\item For instance, the linear regression model is determined by minimizing the regularized sum-of-squares error function given by:
 	$$J(\bm{w}) = \frac{1}{2}\sum\limits_{n=1}^{N} \left\{\bm{w}^T \bm{\phi}\left(\bm{x}_n\right) - t_n \right\} + \frac{\lambda}{2}\bm{w}^T \bm{w}$$
-	\item Solving the equation of the derivate being equals to 0, we obtain:
-	$$\bm{w} = \left(\bm{\Phi}^T\bm{\Phi} +\lambda \bm{I}_M\right)^{-1}\bm{\Phi}^T\bm{t} = \bm{\Phi}^T\left(\bm{\Phi}\bm{\Phi}^T +\lambda \bm{I}_M\right)^{-1}\bm{t} $$
+	\item Solving the equation of the derivate being equal to 0, we obtain:
+	$$\bm{w} = \left(\bm{\Phi}^T\bm{\Phi} +\lambda \bm{I}_M\right)^{-1}\bm{\Phi}^T\bm{t} = \bm{\Phi}^T\left(\bm{\Phi}\bm{\Phi}^T +\lambda \bm{I}_N\right)^{-1}\bm{t} $$
 	\item Here, we can replace the inner product $\bm{\Phi}\bm{\Phi}^T$ by the gram matrix $\bm{K}$ where $K_{ij} = \bm{\phi}(\bm{x}_i)^T\bm{\phi}(\bm{x}_j)$
 	\item By defining the dual variable $\bm{\alpha} = \left(\bm{K} +\lambda \bm{I}_M\right)^{-1}\bm{t}$, we get the following equations:
 	\begin{equation*}
 		\begin{split}
 			\bm{w} & =\bm{\Phi}^T \bm{\alpha} = \sum\limits_{n=1}^{N} \alpha_n \bm{\phi}(\bm{x}_n)\\
-			y\left(\bm{x}'\right) & = \bm{w}^T \bm{\phi}(\bm{x}') = \sum\limits_{n=1}^{N} \alpha_n \bm{\phi}\left(\bm{x}_n\right)^T \bm{\phi}\left(\bm{x}'\right) = \sum\limits_{n=1}^{N} \alpha_n k\left(\bm{x},\bm{x}'\right)
+			y\left(\bm{x}',\bm{w}\right) & = \bm{w}^T \bm{\phi}(\bm{x}') = \sum\limits_{n=1}^{N} \alpha_n \bm{\phi}\left(\bm{x}_n\right)^T \bm{\phi}\left(\bm{x}'\right) = \sum\limits_{n=1}^{N} \alpha_n k\left(\bm{x},\bm{x}'\right)
 		\end{split}
 	\end{equation*}
 	\item Thus, we can express linear regression by a dual representation with kernel methods
@@ -35,15 +35,15 @@
 	\end{itemize}
 	\item \textbf{Disadvantages}/\textbf{problems}:
 	\begin{itemize}
-		\item The computational cost to retrieve $\bm{\alpha}$ is $\mathcal{O}(N^3)$ as $\bm{K}\in\mathbb{R}^{N\times N}$ compared to $\mathcal{O}(M^3)$ for calculating $M$ on the standard way (the cost comes from the inverse)
-		\item During prediction, we need $\mathcal{O}(N\cdot M)$ to compute the output for a new point, but would only need $\mathcal{O}(N)$ with the primal parameters $\bm{w}$ $\Rightarrow$ slow prediction for large datasets
+		\item The computational cost to retrieve $\bm{\alpha}$ is $\mathcal{O}(N^3)$ as $\bm{K}\in\mathbb{R}^{N\times N}$ compared to $\mathcal{O}(M^3)$ for calculating the standard way (the cost comes from the inverse, see in second set of equations the different inverses)
+		\item During prediction, we need $\mathcal{O}(N\cdot M)$ to compute the output for a new point, but would only need $\mathcal{O}(M)$ with the primal parameters $\bm{w}$ $\Rightarrow$ slow prediction for large datasets
 	\end{itemize}
 \end{itemize}
 \subsubsection{Constructing valid kernels}
 \begin{itemize}
-	\item For a valid kernel, the gram matrix $\bm{K}$ must be positive semi-definite for all possible choices of $\left\{x_n\right\}_{n=1}^{N}$
+	\item For a valid kernel, the gram matrix $\bm{K}$ must be symmetric and positive semi-definite for all possible choices of $\left\{x_n\right\}_{n=1}^{N}$
 	\item An equivalent constraint would be that $\bm{z}^T \bm{K} \bm{z} \geq 0$ for all $\bm{z}\in\mathbb{R}^{N}$ or the eigenvalues must all be positive (note that $\bm{K}$ can still contain negative elements)
-	\item We can construct a kernel from an explicit set of basis functions when we use the expression $k\left(\bm{x},\bm{x}'\right)=\bm{\phi}^T(\bm{x})\bm{\phi}(\bm{x})$
+	\item We can construct a kernel from an explicit set of basis functions when we use the expression $k\left(\bm{x},\bm{x}'\right)=\bm{\phi}^T(\bm{x})\bm{\phi}(\bm{x}')$
 	\item Further, we can construct new kernels by using other valid kernels and extend them by for example multiplying with a constant (no need to know all variations)
 	\item Given a valid kernel function, we can derive its corresponding feature vectors (which can be hard and possible infinite). Therefore, we need to express it in the form of $\bm{\phi}(\bm{x})^T \bm{\phi}(\bm{x}')$ where $\bm{\phi}$ must be the same function applied on different points
 	\item For example a polynomial kernel of $M=2$ can be rewritten as:
@@ -59,7 +59,7 @@
 	\item Some (popular) kernels:
 	\begin{itemize}
 		\item Generalized polynomial kernel $k\left(\bm{x}, \bm{x}'\right) = \left(c + \bm{x}^T \bm{x}'\right)^{M}$ (feature vector only contains polynomial to order $M$)
-		\item Gaussian kernel with infinite feature dimensionality: $k\left(\bm{x}, \bm{x}'\right) = \exp\left(-\frac{1}{2l^2} ||\bm{x}-\bm{x}'||^2\right)$
+		\item Gaussian kernel with infinite feature dimensionality: $k\left(\bm{x}, \bm{x}'\right) = \exp\left(-\frac{1}{2\sigma^2} ||\bm{x}-\bm{x}'||^2\right)$
 		\item Radial basis functions of the form $k\left(\bm{x}, \bm{x}'\right) = k\left(||\bm{x}-\bm{x}'||^2\right)$
 	\end{itemize}
 \end{itemize}
@@ -72,7 +72,7 @@
 \subsubsection{Maximum Margin Classifier}
 \begin{itemize}
 	\item Similar to discriminant functions in 3.3
-	\item For a linearly separable dataset, the maximum margin is defined as the distance between the decision boundary and the closest training point $\Rightarrow$ most robust and stable for perturbations of the input
+	\item For a linearly separable dataset, the margin is defined as the distance between the decision boundary and the closest training point $\Rightarrow$ maximize for being robust and stable to perturbations of the input
 	\item The distance of a point to the decision boundary is (as previously) defined by:
 	$$r_n = \frac{|y(\bm{x}_n)|}{||w||} = \frac{t_ny(\bm{x}_n)}{||w||}\text{\hspace{2mm} if } \bm{x}_n \text{ correctly classified}$$ 
 	\item The margin is defined as the minimum distance of decision boundary to any point:
@@ -96,29 +96,30 @@
 		\item There are two kinds of solutions:
 		\begin{itemize}
 			\item If the stationary points lies in the region $g(\bm{x})\geq 0$, we have $\nabla f(\bm{x})=0$ and $\mu=0$
-			\item Otherwise, if stationary points lies on the boundary we have $\nabla f(\bm{x})=-\mu \nabla g(\bm{x})$
+			\item Otherwise, if optimum lies outside constraint region and thus stationary points lies on the boundary we have $\nabla f(\bm{x})=-\mu \nabla g(\bm{x})$ and $\mu > 0$
 		\end{itemize}
-		\item We can solve the optimization problem by first getting a solution for $\tilde{L}(\mu) = \max_{\bm{x}} L(\bm{x},\mu)$, and then optimizing it with respect to $\mu$: $\max_{\mu}\tilde{L}(\mu)$
+		\item We can solve the optimization problem by first getting a solution for $\tilde{L}(\mu) = \max_{\bm{x}} L(\bm{x},\mu)$, and then optimizing it with respect to $\mu$: $\min_{\mu}\tilde{L}(\mu)$
 	\end{itemize}
 	\item When we apply this for our maximum margin classifier, we get the following optimization objective with $N$ Lagrange multipliers $a_n$:
-	$$L\left(\bm{w},b,\bm{a}\right) = \frac{1}{2}||\bm{w}||^2 - \sum\limits_{n=1}^{N} a_n \left\{t_n \left(\bm{w}^T \bm{x} + b\right) - 1\right\}$$
+	$$L\left(\bm{w},b,\bm{a}\right) = \frac{1}{2}||\bm{w}||^2 - \sum\limits_{n=1}^{N} a_n \left\{t_n \left(\bm{w}^T \bm{x}_n + b\right) - 1\right\}$$
 	\item First, minimize with respect to the primal variables $\bm{w}$ and $b$:
 	\begin{equation*}
 		\begin{split}
-			\frac{\partial L}{\partial \bm{w}} & = \bm{w}^T - \sum\limits_{n=1}^{N} a_n t_n \bm{x}_n^T = 0\to \bm{w} = \sum\limits_{n=1}^{N}a_n t_n \bm{x}_n^T\\
+			\frac{\partial L}{\partial \bm{w}} & = \bm{w}^T - \sum\limits_{n=1}^{N} a_n t_n \bm{x}_n^T = 0\to \bm{w} = \sum\limits_{n=1}^{N}a_n t_n \bm{x}_n\\
 			\frac{\partial L}{\partial b} & = - \sum\limits_{n=1}^{N} a_n t_n = 0\to \sum\limits_{n=1}^{N} a_n t_n = 0\\
 		\end{split}
 	\end{equation*}
-	\item Eliminating $\bm{w}$ and $b$ gives the dual representation $\tilde{L}(\bm{a})$:
+	\item Eliminating $\bm{w}$ and $b$ gives the dual representation $\tilde{L}(\bm{a})$ which we try to \textit{maximize} w.r.t. $\bm{a}$ s.t. constraints $a_n \geq 0$ and $\sum_{n=1}^{N} a_n t_n = 0$:
 	\begin{equation*}
 		\begin{split}
 			\tilde{L}(\bm{a}) = \sum\limits_{n=1}^{N} a_n - \frac{1}{2} \sum\limits_{n=1}^{N}\sum\limits_{m=1}^{N} a_n a_m t_n t_m \underbrace{\bm{x}_n^T \bm{x}_m}_{k(\bm{x}_n, \bm{x}_m)}
 		\end{split}
 	\end{equation*}
-	\item For prediction, we use the previously derived result $\bm{w} = \sum_{n=1}^{N}a_n t_n \bm{x}_n^T$ to convert it into a kernel:
-	$$y(\bm{x})=\bm{w}^T \bm{x} + b = \sum_{n=1}^{N}a_n t_n k(\bm{x}_n, \bm{x})$$
+	\item For prediction, we use the previously derived result $\bm{w} = \sum_{n=1}^{N}a_n t_n \bm{x}_n$ to convert it into a kernel:
+	$$y(\bm{x})=\bm{w}^T \bm{x} + b = \sum_{n=1}^{N}a_n t_n k(\bm{x}_n, \bm{x}) +b$$
 	\item For every data point, $a_n = 0$ or $t_n y(\bm{x}) = 1$. For all points that have $a_n > 0$ influence the prediction, so called support vectors. They lie on maximum margin hyperplanes 
-	\item The bias $b$ can be determined by solving $t_n y(\bm{x}_n) = 1$ for a support vector $x_n$
+	\item The bias $b$ can be determined by solving $t_n y(\bm{x}_n) = 1$ for a support vector $\bm{x}_n$: $b = t_n - \sum_{m \in S} a_m t_m k(\bm{x}_m,\bm{x}_n$ where $S$ is the set of indices of support vectors. It is more stable to average all estimates for $b$ over all support vectors
+	\item If data is not linearily separable, use non-linear kernel (e.g. Gaussian kernel)
 	\begin{figure}[ht]
 		\centering
 		\includegraphics[width=0.3\textwidth]{figures/svm_support_vectors.png}
@@ -169,10 +170,10 @@
 	\begin{itemize}
 		\item Only points with $a_n > 0$ are support vectors and contribute to the prediction
 		\item If $C > a_n > 0$, then $t_n y(\bm{x}_n) = 1$ (points on the margin) as $\mu_n > 0$ and hence $\xi_n = 0$
-		\item If $a_n = C$, then $\mu_n = 0$ and $\xi_n \geq 0$. When $\xi_n \leq 1$, the points is still correctly classified but within the margin. Otherwise, the point is misclassified
+		\item If $a_n = C$, then $\mu_n = 0$ and $\xi_n \geq 0$. When $\xi_n \leq 1$, the points is still correctly classified but within/on the margin. Otherwise, the point is misclassified
 	\end{itemize}
 	\item If $C\to\infty$, we recover the hard margin classifier again as we don't allow any outliers
-	\item If $C\to 0$, the margin gets really large as we try to maximize the margin without caring about the misclassifications. Also, all points $a_n$ will become support vectors 
+	\item If $C\to 0$, the margin gets really large as we try to maximize the margin without caring about the misclassifications. Also, all points $\bm{x}_n$ will become support vectors 
 \end{itemize}
 \subsection{Gaussian Processes}
 \subsubsection{Essentials of Gaussian distributions}
@@ -186,7 +187,7 @@
 	\mu_1\\\mu_2
 	\end{array}\right], \left[\begin{array}{cc}
 	\Sigma_{11} & \Sigma_{12} \\ \Sigma_{21} & \Sigma_{22} 
-	\end{array}\right]\right)\implies\hspace{1mm} p(x_1) = \mathcal{N}(\mu_1, \Sigma_11),\hspace{3mm} p(x_2) = \mathcal{N}(\mu_2, \Sigma_22)$$
+	\end{array}\right]\right)\implies\hspace{1mm} p(x_1) = \mathcal{N}(\mu_1, \Sigma_{11}),\hspace{3mm} p(x_2) = \mathcal{N}(\mu_2, \Sigma_{22})$$
 	\item \textbf{Conditional property}: if two random variables $x_1$ and $x_2$ are jointly Gaussian distributed, then conditioning one variables on the other still leads to a Gaussian
 	$$p(x_1|x_2) = \mathcal{N}(\mu_{1|2}, \Sigma_{1|2})$$
 	\item \textbf{Sum property}: Summing two independent Gaussian random variables lead to a new Gaussian variable:
@@ -196,7 +197,7 @@
 \subsubsection{Introduction to Gaussian Processes}
 \begin{itemize}
 	\item In Bayesian linear regression, we assume that the target is distributed as $t=\bm{\phi}\left(\bm{x}\right)^T \bm{w} + \epsilon$ where $\epsilon\sim\mathcal{N}(0,\beta^{-1})$. The posterior is also Gaussian distributed: $p(\bm{w}|\bm{X},\bm{t}) = \mathcal{N}(\bm{w}|\bm{m}_N, \bm{S}_N)$.
-	\item When we predict for new points, we use the mean $\mu_N = \sum_{n=1}^{N}\beta \bm{\phi}(\bm{x})^T \bm{S}_N^{-1} \bm{\phi}(\bm{x}_n)t_n$ % and variance $\sigma_N^2(\bm{x})=\beta^{-1} + \bm{\phi}(\bm{x})^T \bm{S}_N \bm{\phi}(\bm{x})$
+	\item When we predict for new points, we use the mean $\mu_N = \sum_{n=1}^{N}\beta \bm{\phi}(\bm{x})^T \bm{S}_N \bm{\phi}(\bm{x}_n)t_n$ % and variance $\sigma_N^2(\bm{x})=\beta^{-1} + \bm{\phi}(\bm{x})^T \bm{S}_N \bm{\phi}(\bm{x})$
 	\item Here we see that we can express the mean by the kernel $k(\bm{x}_n, \bm{x}_m) = \bm{\phi}(\bm{x}_n)^T \bm{S}_N^{-1} \bm{\phi}(\bm{x}_m)$ $\Rightarrow$ increase expressiveness of Linear Bayesian regression by using more complex kernels
 	\item Definition of Gaussian Processes: A Gaussian process is a collection of random variables, any finite number of which is jointly Gaussian distributed
 	\item Gaussian Processes represent distributions over random functions!
@@ -247,6 +248,7 @@
 	K(\bm{X}, \bm{X}) + \beta^{-1}\bm{I} & K(\bm{X},\bm{X}^{*})\\
 	K(\bm{X}^{*},\bm{X}) & K(\bm{X}^{*}, \bm{X}^{*}) + \beta^{-1}\bm{I}\\
 	\end{bmatrix}\right)$$
+	\item Then the posterior GP is: $$ p(\bm{f}^* | \bm{X}^*, \bm{X}, \bm{f}) = \mathcal{N}(\bm{\mu}^*, \bm{\Sigma}^*) $$ with $$\bm{\mu}^* = K(\bm{X}^*,\bm{X})(K(\bm{X},\bm{X}) + \beta^{-1} \bm{I})^{-1} \bm{f}$$ $$\bm{\Sigma}^* = K(\bm{X}^*,\bm{X}^*) + \beta^{-1} \bm{I} - K(\bm{X}^*,\bm{X}) (K(\bm{X},\bm{X}) + \beta^{-1} \bm{I})^{-1} K(\bm{X},\bm{X}^*)$$
 	\item The more points we see the more certain our predictions gets
 	\item Kernel parameters can be chosen based on MLE on training observations
 \end{itemize}

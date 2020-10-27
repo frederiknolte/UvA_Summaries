@@ -4,6 +4,10 @@ $$\mathcal{N}\left(\bm{x}|\bm{\mu}, \bm{\Sigma}\right) = \frac{1}{\left(2\pi\rig
 
 $$\frac{\partial}{\partial \bm{\mu}}\mathcal{N}\left(\bm{x}|\bm{\mu}, \bm{\Sigma}\right)  = \mathcal{N}\left(\bm{x}|\bm{\mu}, \bm{\Sigma}\right) \left(\bm{x}-\bm{\mu}_k\right)^T\bm{\Sigma}^{-1}$$
 
+$$\dfrac{\partial}{\partial }$$
+
+$$\mathcal{N}(x|\mu,\sigma^2) = \dfrac{1}{(2\pi \sigma^2)^{1/2}} \exp \left\{ - \dfrac{1}{2\sigma^2} (x - \mu)^2 \right\}$$
+
 % $$\frac{\partial}{\partial \bm{\Sigma}}\mathcal{N}\left(\bm{x}|\bm{\mu}, \bm{\Sigma}\right)  = ...$$
 
 \subsection{Rules of probability}
@@ -12,7 +16,7 @@ $$\frac{\partial}{\partial \bm{\mu}}\mathcal{N}\left(\bm{x}|\bm{\mu}, \bm{\Sigma
 	\begin{tabular}{c|cc}
 		& \textbf{Discrete} & \textbf{Continuous}\\
 		\hline
-		\textbf{Additivity} & $p(X\in A) = \sum\limits_{x\in A}p(x)$ & $p\left(x\in (a,b)\right) = \int\limits_{a}^{b}p(x)dx$\\[10pt]
+		\textbf{Additivity} & $p(X\in A) = \sum\limits_{x\in A}p(x)$ & $p\left(x\in [a,b]\right) = \int\limits_{a}^{b}p(x)dx$\\[10pt]
 		\textbf{Positivity} & $0 \leq p(x)\leq 1$ & $0 \leq p(x) \not\leq 1$\\[10pt]
 		\textbf{Normalization} & $\sum_{x} p(x) = 1$ & $\int_{\chi} p(x)dx = 1$\\[10pt]
 		\textbf{Sum Rule} & $p(x) = \sum\limits_{y\in\mathcal{Y}} p(x,y)$ & $p(x)=\int\limits p(x,y)dy$\\[10pt]

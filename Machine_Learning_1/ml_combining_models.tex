@@ -14,7 +14,7 @@
 \end{itemize}
 \subsection{Committees}
 \begin{itemize}
-	\item We can motivate the idea of committees by the bias-variance decomposition: when we average over models, we are able to reduce the variance of the model's predictions. Thus, by using complex models with low bias error, we can improve the performance by reducing the variance through averaging
+	\item We can motivate the idea of committees by the bias-variance decomposition: when we average over models that were trained on different datasets, we are able to reduce the variance of the model's predictions. Thus, by using complex models with low bias error, we can improve the performance by reducing the variance through averaging
 	\item Averaging is therefore only effective if models are complex enough to overfit
 	\item However, in practice, we have only one dataset on which we train $\Rightarrow$ introduce variability between the models within the committee by various methods
 \end{itemize}
@@ -23,10 +23,11 @@
 	\item Suppose we have a dataset $\bm{X} = \left[\bm{x}_1, ..., \bm{x}_N\right]^T$
 	\item \textbf{Bootstrapping dataset}: we create $B$ datasets by sampling $N$ datapoints \textit{with replacement} from the original dataset $\bm{X}$. So, in $\bm{X}_b$, some points will occur more than once and others might be absent
 	\item For doing regression with this method, we train $B$ models on their corresponding dataset, and use the average prediction for a new point:
-	$$y(\bm{x}) = \frac{1}{B}\sum\limits_{b=1}^{B} y_b(\bm{x})$$
+	$$y(\bm{x}) = \frac{1}{B}\sum\limits_{b=1}^{B} y_b(\bm{x})$$ where $$ y_b(\bm{x}) = h(\bm{x}) + \epsilon_b(\bm{x})$$ where $h(\bm{x})$ is ground truth and $\epsilon_b(\bm{x})$ is error of model $b$
 	\item This is called bootstrap aggregation or also \textit{bagging}
-	\item The average error made by one of the models is $E_{\text{AV}} = \frac{1}{B}\sum_{b=1}^{B} \mathbb{E}_{\bm{x}}\left[\epsilon_b(\bm{x})^2\right]$. In contrast, for the committee, we expect an error of:
-	$$E_{\text{COM}} = \mathbb{E}_{\bm{x}}\left[\left\{\frac{1}{B}\sum\limits_{b=1}^{B}\epsilon_b(\bm{x})\right\}^2\right]$$
+	\item The average error made by model $b$ is $E_{\bm{x}}(\{ y_b(\bm{x}) - h(\bm{x}) \}^2) = E_{\bm{x}}(\epsilon_b(\bm{x})^2)$ 
+	\item Average error made by the $b$ models individually: $E_{\text{AV}} = \frac{1}{B}\sum_{b=1}^{B} \mathbb{E}_{\bm{x}}\left[\epsilon_b(\bm{x})^2\right]$. In contrast, for the committee, we expect an error of:
+	$$E_{\text{COM}} = E_{\bm{x}}\left[ \left\{ \dfrac{1}{B} \sum_{b=1}^{B} y_b(\bm{x}) - h(\bm{x}) \right\}^2 \right] = \mathbb{E}_{\bm{x}}\left[\left\{\frac{1}{B}\sum\limits_{b=1}^{B}\epsilon_b(\bm{x})\right\}^2\right]$$
 	\item If all models would be independent (which they are not because of using very similar datasets), we would reduce the expected error by factor $B$. In practice, we can at least guarantee that $E_{\text{COM}}\leq E_{\text{AV}}$
 	\item Still, bias error cannot be reduced by bagging!
 \end{itemize}
@@ -36,7 +37,8 @@
 	$$\bm{x} = \left[x_1, x_2, \dots, x_D\right]^T\Rightarrow \bm{\tilde{x}} = \left[x_1, x_3, x_5, x_{D-1}\right]^T$$
 	\item Also called \textit{random subspace method}
 	\item Works especially well if features are uncorrelated and/or if the number of features is much larger than the number of training points
-	\item Decision trees with bagging and random subspaces lead to random forests
+	\item Causes learners to not over-focus on features that are overly predictive for training set but do not generalize  
+	\item Decision trees with bootstrapping and random subspaces lead to random forests
 \end{itemize}
 \subsubsection{Boosting}
 \begin{itemize}
@@ -62,15 +64,17 @@
 	\item When taking a huge number of basis models (large $M$), we can easily overfit
 	\item Interpretation/Derivation of AdaBoost: minimizing exponential error function sequentially ($E_m = \sum_{n=1}^{N}\exp\left(-t_n f_m(\bm{x}_n)\right)$)
 	\item \textbf{Advantages}: simple boosting algorithm
-	\item \textbf{Disadvantages}: very sensitive to outliers ($t_n y_m(\bm{x})$ very large and exponentially increasing weight), no probabilistic interpretation
+	\item \textbf{Disadvantages}: very sensitive to outliers (for which $t_n y_m(\bm{x})$ is large negative), no probabilistic interpretation, not easy to generalize to $K > 2$
 \end{itemize}
 \subsection{Decision trees}
 \begin{itemize}
 	\item Split input space into rectangles which are aligned along the axes (parallel to axes)
 	\item We use sequential binary decisions which can be summarized in a tree structure
 	\item Used for classification and regression
+	\item For regression the prediction of a new datapoint is the average of the training values in the bucket
+	\item For classification the predicted class is determined by majority vote of training samples in the bucket
 	\item \textbf{Advantages}: interpretable, combining with boosting strongly increases performance
-	\item \textbf{Disadvantages}: Not state-of-the-art, large trees easily overfit but small trees underfit (can be prevented by training large trees and sequentially removing nodes that reduce the error the least)
+	\item \textbf{Disadvantages}: Not state-of-the-art, large trees easily overfit but small trees underfit (can be prevented by training large trees and sequentially removing nodes that reduce the error the least), short-sighted because of greedy
 	\item Tree building process is recursively by minimizing the squared error (for regression). At each iteration, we add the feature boundary that reduces the error the most
 	\item Stop criteria can be for example min. number of data points in region, depth/height,... or decrease of loss is lower than certain threshold
 	\item \textit{Pruning}: give a penalty to trees with large number of leafs to prevent unnecessary overfitting 

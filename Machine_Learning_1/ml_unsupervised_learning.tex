@@ -23,12 +23,12 @@
 		\item Repeat until convergence ($\mu_k$ and $z_{nk}$ do not change for any $n$ and $k$):
 		\begin{enumerate}
 			\item \textbf{Expectation step}: Find the assignment of the closest cluster for every data point:
-			$$\frac{\partial J}{\partial z_{nk}}=0 \Rightarrow z_{nk} = \begin{cases}
+			$$z_{nk} = \begin{cases}
 			1 & \text{ if } k=\arg\min\limits_j ||\bm{x}_n - \bm{\mu}_j||^2\\
 			0 & \text{ otherwise }
 			\end{cases}$$
 			\item \textbf{Maximization step}: Find the means of each cluster:
-			$$\frac{\partial J}{\partial \bm{\mu}_{k}}=0 \Rightarrow \bm{\mu}_k = \frac{\sum_n z_{nk}\bm{x}_n}{\sum_n z_{nk}}$$
+			$$ \bm{\mu}_k = \frac{\sum_n z_{nk}\bm{x}_n}{\sum_n z_{nk}}$$
 		\end{enumerate}
 	\end{enumerate}
 	\begin{figure}[ht]
@@ -89,7 +89,8 @@
 	\begin{equation*}
 		\begin{split}
 			& \frac{\partial}{\partial \pi_k} \sum\limits_{n=1}^{N} \ln p\left(\bm{x}_n|\left\{\pi_k\right\}_{k=1}^{K}, \left\{\bm{\mu}_k\right\}_{k=1}^{K}, \left\{\bm{\Sigma}_k\right\}_{k=1}^{K}\right) + \lambda \left(\sum\limits_{j=1}^{K}\pi_j - 1\right)\\
-			= & \sum\limits_{n=1}^{N} \frac{\pi_k \mathcal{N}\left(\bm{x}_n|\bm{\mu}_k, \bm{\Sigma}_k\right)}{\sum\limits_{j=1}^{K}\pi_j \mathcal{N}\left(\bm{x}_n|\bm{\mu}_j, \bm{\Sigma}_j\right)} + \lambda \pi_k\\
+			= & \sum\limits_{n=1}^{N} \frac{ \mathcal{N}\left(\bm{x}_n|\bm{\mu}_k, \bm{\Sigma}_k\right)}{\sum\limits_{j=1}^{K}\pi_j \mathcal{N}\left(\bm{x}_n|\bm{\mu}_j, \bm{\Sigma}_j\right)} + \lambda = 0\\
+			0 = & \sum\limits_{n=1}^{N} \frac{\pi_k \mathcal{N}\left(\bm{x}_n|\bm{\mu}_k, \bm{\Sigma}_k\right)}{\sum\limits_{j=1}^{K}\pi_j \mathcal{N}\left(\bm{x}_n|\bm{\mu}_j, \bm{\Sigma}_j\right)} + \lambda \pi_k\\
 			= & \sum\limits_{n=1}^{N} \gamma\left(z_{nk}\right) + \lambda \pi_k\\
 			\Rightarrow & \pi_k = -\frac{1}{\lambda}\sum\limits_{n=1}^{N} \gamma\left(z_{nk}\right)\\[10pt]
 			& \frac{\partial}{\partial \lambda} \sum\limits_{n=1}^{N} \ln p\left(\bm{x}_n|\left\{\pi_k\right\}_{k=1}^{K}, \left\{\bm{\mu}_k\right\}_{k=1}^{K}, \left\{\bm{\Sigma}_k\right\}_{k=1}^{K}\right) + \lambda \left(\sum\limits_{j=1}^{K}\pi_j - 1\right)\\
@@ -98,21 +99,23 @@
 		\end{split}
 	\end{equation*}
 	\item Maximizing $\bm{\Sigma}_k$ is done by:
-	$$\bm{\Sigma}_k = \frac{1}{N_k} \sum\limits_{n=1}^{N} \gamma\left(z_{nk}\right)\left(\bm{x}_n - \bm{\mu}_k\right)^T\left(\bm{x}_n - \bm{\mu}_k\right)$$
+	$$\bm{\Sigma}_k = \frac{1}{N_k} \sum\limits_{n=1}^{N} \gamma\left(z_{nk}\right)\left(\bm{x}_n - \bm{\mu}_k\right)\left(\bm{x}_n - \bm{\mu}_k\right)^T$$
 	\item Summarized EM algorithm steps for Gaussian mixture models: 
 	\begin{itemize}
-		\item \textbf{Expectation step}: update the posterior:
-		$$\gamma\left(z_{k}\right) = \frac{\pi_k \mathcal{N}\left(\bm{x}|\bm{\mu}_k, \bm{\Sigma}_k\right)}{\sum_j \pi_j \mathcal{N}\left(\bm{x}|\bm{\mu}_j, \bm{\Sigma}_j\right)}$$
-		\item \textbf{Maximization step}: update the parameters:
+	    \item Initialize the means $\bm{\mu}_k$, covariances $\bm{\Sigma}$ and mixing coefficients $\pi_k$ and evaluate the initial value of the log likelihood
+		\item \textbf{Expectation step}: update the responsibilities using current parameter values:
+		$$\gamma\left(z_{nk}\right) = \frac{\pi_k \mathcal{N}\left(\bm{x}_n|\bm{\mu}_k, \bm{\Sigma}_k\right)}{\sum_j \pi_j \mathcal{N}\left(\bm{x}_n|\bm{\mu}_j, \bm{\Sigma}_j\right)}$$
+		\item \textbf{Maximization step}: update the parameters using current responsibilities:
 		\begin{equation*}
 			\begin{split}
-				\bm{\mu}_k & = \frac{\sum_{n=1}^{N}\gamma\left(z_{nk}\right)\bm{x}_n}{\sum_{n=1}^{N}\gamma\left(z_{nk}\right)}\\
-				\pi_k & = \frac{N_k}{N}\\
-				\bm{\Sigma}_k & = \frac{1}{N_k} \sum\limits_{n=1}^{N} \gamma\left(z_{nk}\right)\left(\bm{x}_n - \bm{\mu}_k\right)^T\left(\bm{x}_n - \bm{\mu}_k\right)\\
+				\bm{\mu}_k^{new} & = \frac{\sum_{n=1}^{N}\gamma\left(z_{nk}\right)\bm{x}_n}{\sum_{n=1}^{N}\gamma\left(z_{nk}\right)}\\
+				\pi_k^{new} & = \frac{N_k}{N}\\
+				\bm{\Sigma}_k^{new} & = \frac{1}{N_k} \sum\limits_{n=1}^{N} \gamma\left(z_{nk}\right)\left(\bm{x}_n - \bm{\mu}_k^{new}\right)\left(\bm{x}_n - \bm{\mu}_k^{new}\right)^T\\
 			\end{split}
 		\end{equation*}
+		\item Evaluate log likelihood $\ln p(\bm{X}|\bm{\mu},\bm{\Sigma}, \bm{\pi})$ and check for convergence of either the parameters or the log likelihood. If convergence criterion not satisfied return to step 2.
 	\end{itemize}
-	\item Assigning points to clusters: either soft clusters (probability of belonging to $k$: $\gamma\left(z_{k}\right) = p\left(z_k=1|\bm{x}\right)$) or hard clusters (most likely cluster given by $k=\arg\min_j \gamma\left(z_j\right)$)
+	\item Assigning points to clusters: either soft clusters (probability of belonging to $k$: $\gamma\left(z_{k}\right) = p\left(z_k=1|\bm{x}\right)$) or hard clusters (most likely cluster given by $k=\arg\max_j \gamma\left(z_j\right)$)
 	\item \textbf{Pros and cons} of GMM:
 	\begin{itemize}
 		\item[+] Allows soft-assignments in contrast to $K$-means
@@ -123,33 +126,33 @@
 \end{itemize}
 \subsection{Principal Component Analysis}
 \begin{itemize}
-	\item Find linear orthogonal projection to lower dimensional space to maximize variance ($\mathbb{R}^{D}\to \mathbb{R}^{M}$ where $M<D$)
+	\item Find linear orthogonal projection to lower dimensional space while maximizing variance ($\mathbb{R}^{D}\to \mathbb{R}^{M}$ where $M<D$)
 	\item Try to find projection by capturing axes of maximal variation in the data, called \textit{principal components}
 	\item Covariance is given by $S=\frac{1}{N}\sum\limits_{n=1}^{N}\left(\bm{x}_n - \overline{\bm{x}}\right)\left(\bm{x}_n - \overline{\bm{x}}\right)^T$  which is symmetric and positive semi-definite
-	\item Project data into first latent dimension by $\bm{u}_1 \in \mathbb{R}^D$. As we only need its direction, we make sure that $\bm{u}_1^T \bm{u}_1 = 1$
+	\item Project data onto first latent dimension by $\bm{u}_1 \in \mathbb{R}^D$. As we only need its direction, we make sure that $\bm{u}_1^T \bm{u}_1 = 1$
 	\item The projection is given by $\bm{u}_1^T \bm{x}_n$.
 	\item The variance of the projected data is $\bm{u}_1^T S \bm{u}_1$. We try to maximize this variance with respect to the constraint $\bm{u}_1^T \bm{u}_1 = 1$ (Lagrangian multiplier):
-	$$\arg\max_{\bm{u}_1}\max_{\lambda_1} \bm{u}_1^T S \bm{u}_1 + \lambda_1 (1 - \bm{u}_1^T \bm{u}_1)$$
+	$$\mathcal{L}(\bm{u}_1, \lambda_1) = \bm{u}_1^T S \bm{u}_1 + \lambda_1 (\bm{u}_1^T \bm{u}_1 - 1)$$
 	Deriving by $\bm{u}_1$ gives us the equation $S\bm{u}_1 = \lambda_1 \bm{u}_1$ which is the eigenvalue equation. Thus, $\bm{u}_1$ is an eigenvector and $\lambda_1$ and eigenvalue of $S$. As we try to maximize the equation, we choose $\lambda_1$ to be the \textit{greatest} eigenvalue.
 	\item $\bm{u}_1$ is called a \textit{principal component}. The variance of the projected data is $\bm{u}_1^T S \bm{u}_1 = \lambda_1$
 	\item We can repeat this procedure for $M$ orthogonal vectors and get a projection $U_M = \left[\bm{u}_1, ..., \bm{u}_M\right] \in \mathbb{R}^{D\times M}$. Those are $M$ eigenvectors of $S$, where $\lambda_1 \geq \lambda_2 \geq ... \geq \lambda_M$. As $S$ is positive semi-definite, we can ensure that $\lambda_i\geq 0$
 	\item The variance of the projected data is $\sum\limits_{j=1}^{M} \bm{u}_j^T S \bm{u}_j = \sum\limits_{j=1}^{M} \lambda_j$
-	\item \textbf{PCA}: Compute $\overline{\bm{x}}$ and the eigen-decomposition of $S$. The \textbf{projection} is $z = U_M^T \left(\bm{x} - \overline{\bm{x}}\right)$
+	\item \textbf{PCA}: Compute $\overline{\bm{x}}$ and the eigen-decomposition of $S$. The \textbf{projection} is $\bm{z} = U_M^T \left(\bm{x} - \overline{\bm{x}}\right)$
 	\item The idea is that the information which is lost is only noise, so that we still keep the expressiveness of the data. However, eigen-decomposition might be expensive.
 	\item Note that eigenvalues can be found by solving the equation $\det\left(S - \lambda \bm{I}\right) = 0$. We can represent $S$ by its eigenvalue decomposition $S=U\Lambda U^T$. For the eigenvectors, we can state that $\bm{u}_j^T \bm{u}_i = 0 \text{ if } i\neq j, \text{ else } 1$.
 	\item \textbf{Applications}
 	\begin{itemize}
 		\item \textit{Dimensionality reduction}: which $M$ to choose? To preserve at least 90\% of the variance we need to make sure that $\frac{\sum_{j=1}^{M}\lambda_j}{\sum_{j=1}^{D}\lambda_j} \geq 0.9$
 		\item \textit{Feature de-correlation}: PCA ensures that features have no correlation in projected space. The covariance matrix is diagonal: $S'_M = \Lambda_M$
-		\item \textit{Whitening}: center and de-correlate features by $\bm{z} = U_M^T (\bm{x}-\overline{\bm{x}})$ where $M$ can be equals to $D$. If we want to rescale it (e.g. unit std. deviation), we apply a factor: $\bm{z} = \Lambda_M^{1/2} U_M^T (\bm{x}-\overline{\bm{x}})$ 
+		\item \textit{Whitening}: center and de-correlate features by $\bm{z} = U_M^T (\bm{x}-\overline{\bm{x}})$ where $M$ can be equal to $D$. If we want to rescale it (e.g. unit std. deviation), we apply a factor: $\bm{z} = \Lambda_M^{-1/2} U_M^T (\bm{x}-\overline{\bm{x}})$ 
 		\item \textit{Compression}: transform input to lower dimensional space. Reconstruction can be performed by $\tilde{\bm{x}} = U_M \bm{z} + \overline{\bm{x}}$
 	\end{itemize}
 	\item \textbf{Perspective of minimal reconstruction error}
 	\begin{itemize}
 		\item An alternative view on PCA is minimizing the reconstruction error of the transformed data to the original space
-		$$\min \frac{1}{N} \sum\limits_{n=1}^{N} ||\bm{x}_n - \bm{z}_n||^2$$
-		\item We can express our data by $\bm{x}_n = \sum\limits_{j=1}^{D} (\bm{x}_n^T \bm{u}_j) \bm{u}_j$. The transformed data is thus $\bm{z}_n = \sum\limits_{j=1}^{M} (\bm{x}_n^T \bm{u}_j) \bm{u}_j + \sum\limits_{j=M+1}^{D} b_j \bm{u}_j$
-		\item (By doing some math) we can show that the objective function is actually $\sum_{j=M+1}^{D} \bm{u}_j^T S \bm{u}_j$. Thus, both approaches lead to the same result
+		$$\min \frac{1}{N} \sum\limits_{n=1}^{N} ||\bm{x}_n - \bm{\tilde{x}}_n||^2$$
+		\item We can express our data by $\bm{x}_n = \sum\limits_{j=1}^{D} (\bm{x}_n^T \bm{u}_j) \bm{u}_j$. The reconstructed data is thus $\bm{\tilde{x}}_n = \sum\limits_{j=1}^{M} (\bm{x}_n^T \bm{u}_j) \bm{u}_j + \sum\limits_{j=M+1}^{D} b_j \bm{u}_j$ where the second summand is a shared offset and $(\bm{x}_n^T \bm{u}_j) = z_{nj}$
+		\item (By doing some math) we can show that the objective function is actually $\min \sum_{j=M+1}^{D} \bm{u}_j^T S \bm{u}_j$ which can be solved for $\bm{u}_j$ under the constraint $\bm{u}_j^T \bm{u}_j = 1$. When using Lagrange multipliers for this, we obtain eigensystem that can be solved. This is equal to $\min \sum_{j=M+1}^{D} \lambda_j$ i.e. find $M$ largest eigenvalues and eigenvectors such that remaining $(D-M)$ are smallest. Thus, min reconstruction error = max projected variance
 	\end{itemize}
 \end{itemize}
 \subsubsection{Probabilistic PCA}
@@ -158,8 +161,7 @@
 	\item Generative model works as $\bm{x} = W\bm{z} + \bm{\mu} + \bm{\epsilon}$ where $\bm{\epsilon}$ represents the noise
 	\item We define $p(\bm{z}) = \mathcal{N}(\bm{z}|0, \bm{I})$, $p(\epsilon) = \mathcal{N}(\epsilon|0, \sigma^2 \bm{I})$, and therefore $p(\bm{x}|\bm{z}) = \mathcal{N}(\bm{x}, W\bm{z} + \bm{\mu}, \sigma^2 \bm{I})$. By marginalizing out $\bm{z}$, we get $p(\bm{x}) = \mathcal{N}(\bm{x}|\bm{\mu}, C)$ with $C = WW^T + \sigma^2 \bm{I}$
 	\item New data points are generated by first sampling from low dimensional $z$ space, and then sampling $x$ based on $z$
-	\item We can optimize this sample distribution based on the maximum likelihood of a given dataset ($\mu$ is as usual the mean, $\sigma^2 = \frac{1}{D - M}\sum_{j=M+1}^{D} \lambda_j$)
-	\item 
+	\item We can optimize this sample distribution based on the maximum likelihood of a given dataset (with log likelihood $\ln p(\bm{X}|\bm{\mu},\bm{W},\sigma^2) = \sum_{n=1}^{N} \ln \mathcal{N}(\bm{x}_n|\bm{\mu},\bm{C})$): $\bm{\mu} = \dfrac{1}{N} \sum_{n=1}^{N} \bm{x}_n$ , $\sigma^2 = \frac{1}{D - M}\sum_{j=M+1}^{D} \lambda_j$, $\bm{W} = \bm{U}_M (\Lambda_M - \sigma^2 \bm{I})^{1/2}$
 \end{itemize}
 \subsubsection{Non-linear variants of PCA}
 \begin{itemize}
@@ -167,8 +169,9 @@
 	\item We can get non-linear by using different forms
 	\item \textbf{Kernel PCA}
 	\begin{itemize}
-		\item We can define the covariance matrix by $C=\frac{1}{N}\sum\limits_{n=1}^{N} \bm{\phi}(\bm{x})\bm{\phi}(\bm{x})^T$
-		\item Then, we can state that $z_i(\bm{x}) = \bm{\phi}(\bm{x})^T \bm{u}_i = \sum_{n=1}^{N}a_{in}\bm{\phi}(\bm{x})^T \bm{\phi}(\bm{x}_n) =  \sum_{n=1}^{N}a_{in}k(\bm{x},\bm{x}_n)$
+		\item We can define the covariance matrix in feature space by $C=\frac{1}{N}\sum\limits_{n=1}^{N} \bm{\phi}(\bm{x}_n)\bm{\phi}(\bm{x}_n)^T$ (assuming that the mean is 0)
+		\item Then, we can state that $z_i(\bm{x}) = \bm{\phi}(\bm{x})^T \bm{u}_i = \sum_{n=1}^{N}a_{in}\bm{\phi}(\bm{x})^T \bm{\phi}(\bm{x}_n) =  \sum_{n=1}^{N}a_{in}k(\bm{x},\bm{x}_n)$, where $\bm{u}_i$ are the principle components of $C$ and $\bm{a}_i$ is the $i^{th}$ eigenvector of $\bm{K} = \bm{\Phi}^T\bm{\Phi} \in \mathbb{R}^{N \times N}$
+		\item It can be seen that the projection can not only be expressed in terms of the principal components of $C$ but also in terms of kernels
 		\item By using a non-linear kernel, we are able to get non-linear projections
 	\end{itemize}
 	\item \textbf{Autoencoders (NN)}

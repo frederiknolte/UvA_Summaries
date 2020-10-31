@@ -27,7 +27,7 @@
 		\item Better numerical stability ($\log$ with very small/negative values, helps for e.g. Softmax+CrossEntropy)
 		\item Makes gradients larger as exponential-like activations often lead to saturation, which means gradients are almost 0 (but not with $\log$)
 	\end{itemize}
-	\item It is important that the input and output distribution of every module match, as otherwise we get inconsistent behavior and makes it harder to learn
+	\item It is important that the input and output distribution of every module match, as otherwise we get inconsistent behavior and makes it harder to lear
 	\begin{itemize}
 		\item For activation functions, this means we prefer them to be mostly activated around the origin and centered
 		\item Otherwise, e.g. ReLU can be come a linear unit or set everything to 0

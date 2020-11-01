@@ -1,26 +1,33 @@
 \section{Deep Learning Optimizations}
 \begin{itemize}
-	\item Pure optimization has a very direct goal, namely finding the optimum. However, in Machine Learning, we define a training goal. Thus, the ``optimal'' parameters might not necessarily be the optimum (e.g. overfitting)
+	\item Pure optimization has a very direct goal, namely finding the optimum. However, in Machine Learning, we want to not only make small errors on training data but also generalize well to new data. Thus, the "optimal" parameters might not necessarily be the optimum (e.g. overfitting)
 \end{itemize}
 \subsection{Stochastic Gradient Descent}
 \begin{itemize}
 	\item Pushing the weights towards highest gradient change
 	$$w_{t+1} = w_{t} - \eta_t \nabla_{w} \mathcal{L}$$
-	\item \textit{Gradient descent}: gradients on the full dataset. However:
+	\item \textit{(Batch) Gradient descent}: gradients on the full dataset. However:
 	\begin{itemize}
 		\item Dataset is mostly too large for this
 		\item No real guarantee that this leads to a good optimum and/or it will converge faster
 	\end{itemize}
-	\item \textit{Stochastic gradient descent}: approximate gradients by averaging over a small batch. 
+	\item \textit{Stochastic gradient descent}: approximate gradients from random mini-batch. 
 	\begin{itemize}
-		\item Standard error is inverse proportional to number of elements $m$ in a batch: $\sigma / \sqrt{m}$.
-		\item Noisy gradients help to escape local minima, acts as regularization
+		\item Standard error is inverse proportional to number of elements $m$ in a batch: $\sigma / \sqrt{m}$, where $\sigma$ is variance in $p(x,y^*)$
+		\item Noisy gradients help to escape local minima, acts as regularization, reduce overfitting (good shuffling important)
 		\item Does sample roughly representative gradients from dataset. Is better as training data is also just a rough approximation of what the test data might look like (optimum on training $\neq$ optimum on test)
 		\item SGD is faster, especially in first iterations
-		\item SGD is able to adapt with dynamically changing datasets
+		\item SGD is able to adapt with dynamically changing datasets (and also good for streaming data)
+		\item make sure of class/data balance in batches
 	\end{itemize}
 	\item \textit{Ill conditioning}: if gradients are large, applying them can lead to worse performance. This is the case if the second order derivative changes faster 
 \end{itemize}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=0.7\textwidth]{figures/SGDvsGD.png}
+	\caption{SGD vs GD}
+	\label{fig:SGDvsGD}
+\end{figure}
 \subsection{Advanced optimizations}
 \subsubsection{Gradient-based optimization}
 \begin{itemize}

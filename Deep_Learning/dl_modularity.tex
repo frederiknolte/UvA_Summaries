@@ -13,7 +13,9 @@
 \end{figure}
 \subsection{Module}
 \begin{itemize}
-	\item A module is the simplest mathematical component in a NN, and can be expressed by $a=h(x;w)$ where $a$ is the output, $x$ the input, $w$ trainable parameters and $h$ an activation function
+	\item A module is the simplest mathematical component in a NN, and can be expressed by $a=h(x;w)$ where $a$ is the output, $x$ the input, $w$ trainable parameters (optional) and $h$ an activation function (must be 1st-order differentiable (almost) everywhere)
+	\item Use not too complex models, better complex hierarchies
+	\item trade-off between model complexity and efficiency (often more training iterations with weak model better than few iterations with strong model)
 	\item $w$ mostly learned by gradient-based methods, usually maximizing the likelihood
 	\begin{itemize}
 		\item ML solution: $w^{*} = \arg\max\limits_{w}\prod\limits_{x,y}p_{model}\left(y|x;w\right)$
@@ -27,7 +29,7 @@
 		\item Better numerical stability ($\log$ with very small/negative values, helps for e.g. Softmax+CrossEntropy)
 		\item Makes gradients larger as exponential-like activations often lead to saturation, which means gradients are almost 0 (but not with $\log$)
 	\end{itemize}
-	\item It is important that the input and output distribution of every module match, as otherwise we get inconsistent behavior and makes it harder to lear
+	\item It is important that the input and output distribution of every module match, as otherwise we get inconsistent behavior and makes it harder to learn
 	\begin{itemize}
 		\item For activation functions, this means we prefer them to be mostly activated around the origin and centered
 		\item Otherwise, e.g. ReLU can be come a linear unit or set everything to 0
@@ -35,45 +37,65 @@
 \end{itemize}
 \subsubsection{Example modules}
 \begin{itemize}
-	\item \textbf{Linear module}: $a = wx$
+	\item \textbf{Linear module}: $h(x;w) = x w^T + b$
 	\begin{itemize}
-		\item Simple gradients $\frac{\partial a}{\partial w} = x$, $\frac{\partial a}{\partial x} = w$
+		\item Simple gradients $\frac{\partial h}{\partial w} = x$, $\frac{\partial h}{\partial x} = w$
 		\item No activation saturation $\Rightarrow$ strong, reliable gradients
 	\end{itemize}
-	\item \textbf{Rectified Linear Unit}: $a = \max(0,x)$
+	\item \textbf{Rectified Linear Unit}: $h(x) = \max(0,x)$
 	\begin{itemize}
-		\item Gradient is step function. $\pd{a}{x} = \begin{cases}
+		\item Gradient is step function. $\pd{h}{x} = \begin{cases}
 		0 & \text{ if } x\leq 0\\
 		1 & \text{ if } x > 0\\
 		\end{cases}$
-		\item Hence, strong, fast gradients
-		\item However, dead neurons might be an issue when initialization/weights produce outputs smaller 0 for every input 
-		\item Different variations like LeakyReLU, Softplus ($\ln(1+e^{x})$), NoisyReLU exist
+		\item Hence, strong, fast gradients; ReLUs are data efficient
+		\item However, dead neurons might be an issue when initialization/weights produce outputs smaller 0 for every input; also, large gradients might cause a neuron to die (higher learning rates can help)
+		\begin{itemize}
+			\item Leaky ReLU: $h(x) = \begin{cases} x & \text{ if } x > 0\\ ax & \text{ if } x \leq 0\\ \end{cases}$;
+					$\pd{h}{x} = \begin{cases} 1 & \text{ if } x > 0\\ a & \text{ if } x \leq 0\\ \end{cases}$
+			\item ELU: $h(x) = \begin{cases} x & \text{ if } x > 0\\ \exp (x) - 1 & \text{ if } x \leq 0\\ \end{cases}$;
+					$\pd{h}{x} = \begin{cases} 1 & \text{ if } x > 0\\ \exp (x) & \text{ if } x \leq 0\\ \end{cases}$
+			\item Swish: $h(x) = x * \sigma(x)$;
+					$\pd{h}{x} = \sigma(x)(1 + x - x \sigma(x))$
+			\item Swish: $h(x) = \ln (1 + e^x)$;
+				    $\pd{h}{x} = \dfrac{1}{1 + e^{-x}}$
+		\end{itemize}
 	\end{itemize}
-	\item \textbf{Sigmoid}: $a=\sigma(x)=\frac{1}{1+e^{-x}}$
+	\item \textbf{Sigmoid}: $h(x)=\sigma(x)=\frac{1}{1+e^{-x}}$
 	\begin{itemize}
-		\item Gradient easy to calculate: $\pd{a}{x} = \sigma(x)\left(1-\sigma\left(x\right)\right)$
+		\item Gradient easy to calculate: $\pd{h}{x} = \sigma(x)\left(1-\sigma\left(x\right)\right)$
 		\item Can be used as output function for probability distribution between $[0,1]$
-		\item Saturates and has small gradients
+		\item Saturates (easily becomes overconfident i.e. 0 or 1 decisions) and has small gradients
 		\item Not centered around origin $\Rightarrow$ not good choice for within a network
 	\end{itemize}
-	\item \textbf{Tanh}: $a=\tanh\left(x\right)=\frac{e^{x}-e^{-x}}{e^{x}+e^{-x}}$
+	\item \textbf{Tanh}: $h(x)=\tanh\left(x\right)=\frac{e^{x}-e^{-x}}{e^{x}+e^{-x}}$
 	\begin{itemize}
-		\item Gradients $\pd{a}{x}=1-\tanh\left(x\right)^2$
-		\item Saturates as well, but has slightly higher gradients than sigmoid and is centered around origin
+		\item Gradients $\pd{h}{x}=1-\tanh\left(x\right)^2$
+		\item Saturates as well, but has slightly higher gradients than sigmoid and is centered around origin $\rightarrow$ less "positive" bias for next layers
 	\end{itemize}
-	\item \textbf{Softmax}: $a^{(k)} = \text{softmax}\left(x^{(k)}\right) = \frac{e^{x^{(k)}}}{\sum_j e^{x^{(j)}}}$
+	\item \textbf{Softmax}: $h(x_i) = \frac{e^{x_i}}{\sum_j e^{x_j}}$
 	\begin{itemize}
 		\item Probability distribution over multiple classes
-		\item Softmax trick for numerical stability: $\frac{e^{x^{(k)}-\mu}}{\sum_j e^{x^{(j)}-\mu}}$
+		\item Softmax trick for numerical stability: $\frac{e^{x_i-\mu}}{\sum_j e^{x_j-\mu}}$, where $\mu = \max_i x_i$
+	\end{itemize}
+	\item \textbf{Euclidean Loss}: $h(x,y) = 0.5 ||y-x||^2$
+	\begin{itemize}
+		\item suitable for regression problems
+		\item sensitive to outliers (magnifies errors quadratically)
+	\end{itemize}
+	\item \textbf{Cross Entropy Loss}: $h(x,y) = - \sum_{j=1}^{K} y_j \log x_j$, where $y_j \in \{0,1\}$
+	\begin{itemize}
+		\item suitable for classification problems
+		\item derived from max likelihood learning
+		\item couples well with softmax/sigmoid
 	\end{itemize}
 \end{itemize}
 \subsection{Backpropagation}
 \begin{itemize}
 	\item Calculate gradients of all parameters in the network based on the loss on the last layer
-	\item Principle of chain rule: $\pd{z}{x} = \sum_j \chain{z}{y_i}{x}$ (gradients from all possible paths)
+	\item Principle of chain rule: $\pd{z}{x} = \sum_i \chain{z}{y_i}{x}$ (gradients from all possible paths)
 	\begin{itemize}
-		\item In vector notation: $\nabla_{\bm{x}} \bm{z} = \left(\pd{\bm{y}}{\bm{x}}\right)^T \cdot \nabla_{\bm{y}} \bm{z}$ with Jacobian $\pd{\bm{y}}{\bm{x}} = \left[\begin{array}{ccc}
+		\item \textbf{TODO} In vector notation: $\nabla_{\bm{x}} \bm{z} = \left(\pd{\bm{y}}{\bm{x}}\right)^T \cdot \nabla_{\bm{y}} \bm{z}$ with Jacobian $\pd{\bm{y}}{\bm{x}} = \left[\begin{array}{ccc}
 		\pd{y_1}{x_1} & \pd{y_1}{x_2} & \pd{y_1}{x_3} \\[5pt]
 		\pd{y_2}{x_1} & \pd{y_2}{x_2} & \pd{y_2}{x_3} \\
 		\end{array}\right]$
@@ -81,9 +103,9 @@
 	\item Steps of Backpropagation:
 	\begin{enumerate}
 		\item Compute forward propagations for all layers recursively:
-		$a^{(l)} = h^{(l)}\left(x^{(l)}\right) \text{ and } x^{(l+1)} = a^{(l)}$
+		$\mathbf{h}_l = h_l(\mathbf{w};\mathbf{x}_l)$ and $x_{l+1} := \mathbf{h}_l$
 		\item Compute the reverse path. 
-		$$\pd{\mathcal{L}}{a^{(l)}} = \left(\pd{a^{(l+1)}}{x^{(l+1)}}\right)^T \cdot \pd{\mathcal{L}}{a^{(l+1)}}, \hspace{4mm} \pd{\mathcal{L}}{\theta^{(l)}} = \pd{a^{(l)}}{\theta^{(l)}} \cdot \left(\pd{\mathcal{L}}{a^{(l)}}\right)^T$$
+		\textbf{TODO} $$\pd{\mathcal{L}}{a^{(l)}} = \left(\pd{a^{(l+1)}}{x^{(l+1)}}\right)^T \cdot \pd{\mathcal{L}}{a^{(l+1)}}, \hspace{4mm} \pd{\mathcal{L}}{\theta^{(l)}} = \pd{a^{(l)}}{\theta^{(l)}} \cdot \left(\pd{\mathcal{L}}{a^{(l)}}\right)^T$$
 		\item Use gradients $\pd{\mathcal{L}}{\theta^{(l)}}$ to update parameters via SGD
 	\end{enumerate}
 \end{itemize}

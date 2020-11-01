@@ -4,5 +4,18 @@
 	\item Single perceptron weights every element of the input with a weight, and adds a bias term
 	\item Step function as output: if input sum greater zero, then output is 1, else 0 (or -1)
 	\item Problem: can only learn linear problems and not e.g. XOR
-	\item Overcoming by multi-layer perceptron 
+	\item Overcoming by multi-layer perceptron; however, Rosenblatt's algorithm not applicable because learning depends on ground truth, which does not exist for intermediate neurons
+\end{itemize}
+\subsubsection{Deep Learning today}
+\begin{itemize}
+	\item now, better hardware, bigger data
+	\item makes sense if raw data is uninterpretable $\rightarrow$ either create representation or learn 
+	\item while highly non-convex, hypothesis is that most local minima are close to global minimum
+\end{itemize}
+\subsubsection{Linear separability}
+\begin{itemize}
+	\item let $(x,l)_n : x_i \in \mathbb{R}^d$, then there are $M=2^n$ possible datasets if target is binary and all $x$ constant
+	\item only (about) $d$ out of $M$ are linearly separable and probability of linear separability decreases very fast when $n>d$
+	\item Solution: have non-linear features that are invariant (but not too invariant), repeatable (but not bursty), discriminative (but not too class-specific), robust (but sensitive enough) $\rightarrow$ learn features from data
+	\item Hypothesis: raw data live in huge dimensionalities but effectively lie in lower-dimensional non-linear manifolds $\rightarrow$ discover these manifolds
 \end{itemize}

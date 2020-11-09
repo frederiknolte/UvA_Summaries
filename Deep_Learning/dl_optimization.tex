@@ -20,7 +20,7 @@
 		\item SGD is able to adapt with dynamically changing datasets (and also good for streaming data)
 		\item make sure of class/data balance in batches
 	\end{itemize}
-	\item \textit{Ill conditioning}: if gradients are large, applying them can lead to worse performance. This is the case if the second order derivative changes faster 
+	\item \textit{Ill conditioning}: if gradients are large, applying them can lead to worse performance. This is the case if the second order derivative is larger than the first order derivative
 \end{itemize}
 \begin{figure}[ht!]
 	\centering
@@ -31,11 +31,13 @@
 \subsection{Advanced optimizations}
 \subsubsection{Gradient-based optimization}
 \begin{itemize}
+	\item Flat gradient areas that are minima generalize well. However, if they are not minima, they slow down training significantly
+	\item Flat areas with steep minima are very challenging (how do we even get to the area where steep minimum starts?)
 	\item \textit{Pathological curvatures}: move through a ravine towards minimum. SGD tends to oscillate between the walls because they have high gradients
 	\begin{itemize}
 		\item Second order optimization can help a lot for pathological curvatures: $$w_{t+1} = w_{t} - H_{\mathcal{L}}^{-1} \eta_t g_t$$
 		\item Hessian $H_{\mathcal{L}}^{ij} = \pd{\mathcal{L}}{w_i\partial w_j}$ works as adaptive learning rate per parameter
-		\item However, unfeasible in practice because Hessian gets very large
+		\item However, unfeasible in practice because Hessian gets very large $\rightarrow$ approximate through history of gradients
 	\end{itemize}
 	\begin{figure}[ht!]
 		\centering
@@ -75,7 +77,7 @@
 			m^{(t)} & = \beta_1 m^{(t-1)} + (1 - \beta_1)\cdot g^{(t)}\\
 			v^{(t)} & = \beta_2 v^{(t-1)} + (1 - \beta_2)\cdot \left(g^{(t)}\right)^2\\
 			\hat{m}^{(t)} & = \frac{m^{(t)}}{1-\beta^{t}_1}, \hat{v}^{(t)} = \frac{v^{(t)}}{1-\beta^{t}_2}\\
-			w^{(t)} & = w^{(t-1)} - \frac{\eta}{\sqrt{v^{(t)}} + \epsilon}\circ \hat{m}^{(t)}\\
+			w^{(t+1)} & = w^{(t)} - \frac{\eta}{\sqrt{\hat{v}^{(t)}} + \epsilon}\circ \hat{m}^{(t)}\\
 		\end{split}
 	\end{equation*}
 	\begin{itemize}
@@ -96,7 +98,13 @@
 		\item Very similar to RMSprop, but sums the scales over all time steps ($G_t$) instead of exponentially averaging 
 		\item Less sensitive to learning rate tuning, but it gets very small over training time annealing to 0
 	\end{itemize} 
-	\item \textbf{Nesterov momentum}: use the future gradient instead of the current gradient. Leads to better convergence in theory
+	\item \textbf{Nesterov momentum}: use the future gradient instead of the current gradient. Leads to better convergence in theory. Works well with CNNs
+	\begin{equation*}
+		\begin{split}
+			v_t &= \gamma v_{t-1} + \eta \nabla_{w_t} J(w_t - \gamma v_{t-1}) \\
+			w_{t+1} &= w_t - v_t
+		\end{split}
+	\end{equation*}
 \end{itemize}
 \subsubsection{Bayesian optimization}
 \begin{itemize}
@@ -116,29 +124,69 @@
 	\item \textbf{Batch normalization}: ensure Gaussian distribution of features over batches at every module input
 	\begin{equation*}
 		\begin{split}
-			\mu_B = \frac{1}{m} \sum\limits_{i=1}^{m} x_i, &\hspace{5mm} \sigma_B^2 = \frac{1}{m} \sum\limits_{i=1}^{m} \left(x_i - \mu_B\right)^2 \\
-			\hat{x}_i & = \frac{x_i - \mu_B}{\sqrt{\sigma^2 + \epsilon}} \\
-			\hat{y}_i & = \gamma \cdot \hat{x}_i + \beta
+			\mu_j = \frac{1}{m} \sum_{i=1}^{m} x_{ij}, &\hspace{5mm} \sigma_j^2 = \frac{1}{m} \sum_{i=1}^{m} \left(x_{ij} - \mu_j\right)^2 \\
+			\hat{x}_{ij} & = \frac{x_{ij} - \mu_j}{\sqrt{\sigma_j^2 + \epsilon}} \\
+			\hat{y}_{ij} & = \gamma \cdot \hat{x}_{ij} + \beta
 		\end{split}
 	\end{equation*}
 	\begin{itemize}
 		\item Normalize feature to $\hat{x}_i \sim \mathcal{N}(0,1)$, then rescale with trainable parameters $\gamma$ (variance) and $\beta$ (mean).
-		\item Helps the optimizer to control mean and variance of input distribution, and reduces effects of 2nd order between layers $\Rightarrow$ easier, faster learning 
-		\item Acts as regularizer as distribution depends on mini-batch and therefore introduces noise
-		\item During testing, take a moving average of the last training steps and use those for $\mu_B$ and $\sigma_B^2$
+		\item Helps the optimizer to control mean and variance of input distribution, and reduces effects of 2nd order between layers $\Rightarrow$ easier, faster learning (because we can use higher learning rates)
+		\item Acts as regularizer as distribution depends on mini-batch and therefore introduces noise (better for generalization)
+		\item During testing, take a moving average of the training steps and use those for $\mu_j$ and $\sigma_j^2$
+		\item Disadvantages:
+		\begin{itemize}
+			\item requires large minibatches
+			\item awkward to use with RNNs (must interleave it between recurrent layers)
+		\end{itemize}
+	\end{itemize}
+	\item \textbf{Layer normalization}: ensure Gaussian distribution over all features per sample (originally for RNNs, not so good for image classification)
+	\begin{equation*}
+		\begin{split}
+			\mu_i = \frac{1}{m} \sum_{j=1}^{m} x_{ij}, &\hspace{5mm} \sigma_i^2 = \frac{1}{m} \sum_{j=1}^{m} \left(x_{ij} - \mu_j\right)^2 \\
+			\hat{x}_{ij} & = \frac{x_{ij} - \mu_i}{\sqrt{\sigma_i^2 + \epsilon}} \\
+			\hat{y}_{ij} & = \gamma \cdot \hat{x}_{ij} + \beta
+		\end{split}
+	\end{equation*}
+	\item \textbf{Instance normalization}: ensure Gaussian distribution per channel per training sample (for style transfer, not so good for image classification)
+	\item \textbf{Group normalization}: ensure Gaussian distribution over group of channels per sample
+	\begin{equation*}
+		\begin{split}
+			\mu_i = \frac{1}{m} \sum_{j=1}^{m} x_{ij}, &\hspace{5mm} \sigma_i^2 = \frac{1}{m} \sum_{j=1}^{m} \left(x_{ij} - \mu_j\right)^2 \\
+			\hat{x}_{ij} & = \frac{x_{ij} - \mu_i}{\sqrt{\sigma_i^2 + \epsilon}} \\
+			\hat{y}_{ij} & = \gamma \cdot \hat{x}_{ij} + \beta
+		\end{split}
+	\end{equation*}
+	\begin{itemize}
+		\item same as instance norm but over group of channels
+		\item better than batch norm for small batches (<32)
+		\item useful for object recognition/segmentation
+	\end{itemize}
+	\item \textbf{Weight normalization}: normalize weights, not activations
+	\begin{equation*}
+		\begin{split}
+			\mathbf{w} = g \dfrac{\mathbf{v}}{||\mathbf{v}||}
+		\end{split}
+	\end{equation*}
+	\begin{itemize}
+		\item similar to dividing by standard deviation in batch norm ($\rightarrow$ can be combined with mean-only batch norm)
 	\end{itemize}
 \end{itemize}
 \subsection{Regularization}
 \begin{itemize}
 	\item Weight regularization needed to prevent overfitting
-	\item \textbf{$\ell_2$-regularization}: Introduce objective term for minimizing weights
+	\item \textbf{$\ell_2$-regularization}: Introduce objective/penalty term for minimizing weights
 	$$w^{*}=\arg\min_w \mathcal{L} + \frac{\lambda}{2}\sum_l ||w_l||^2$$
 	\begin{itemize}
 		\item When using simple (stochastic) gradient descend, then $\ell_2$ regularization is the same as weight decay: $$w_{t+1} = \left(1-\lambda \eta_t\right) w_{t} - \eta_t \nabla_{\theta} \mathcal{L}$$
 	\end{itemize}
 	\item \textbf{$\ell_1$-regularization}: use $\ell_1$ objective, introduces sparse weights
 	$$w^{*}=\arg\min_w \mathcal{L} + \lambda \sum_l ||w_l||$$
-	\item \textbf{Early stopping}: stop the training when test error increases but training loss continues to decrease. Can be counted to regularization as training steps are reduced
+	\begin{itemize}
+		\item In SGD: $$ w_{t+1} = w_t - \eta_t \left( \nabla_\theta \mathcal{L} + \lambda \dfrac{w_t}{||w_t||} \right) $$
+		\item leads to sparse weights
+	\end{itemize}
+	\item \textbf{Early stopping}: stop the training when test/validation error increases but training loss continues to decrease. Can be counted to regularization as training steps are reduced
 	\item \textbf{Dropout}: setting activations randomly to 0 during training with probability $p$ (mostly between $0.1$ and $0.5$)
 	\begin{itemize}
 		\item During test time, every activation is reweighted by $1 - p$
@@ -146,12 +194,32 @@
 		\item Neurons get more robust $\Rightarrow$ reduces overfitting
 		\item Effectively, a different network architecture is used every iteration. Testing can be seen as using model ensemble
 	\end{itemize}
+	\item \textbf{Data Augmentation}: Flipping, random cropping, contrasting etc. of images
 \end{itemize}
 \subsection{Weight initialization}
 \begin{itemize}
-	\item There are two forces on the weight magnitude: small weights are needed to keep data around origin, but large weights are required to have strong learning signals
+	\item There are two forces on the weight magnitude: small weights are needed to keep data around origin (especially for symmetric functions as their gradients are larger there), but large weights are required to have strong learning signals
 	\item Initialization should preserve variance of activations (input variance $\approx$ output variance to keep distribution between modules same)
+	\item Weights must be initialized to be different from one another
+	\item Bad initialization can cause problems:
+	\begin{itemize}
+		\item initializing weights in every layer with same variance can diminish variance in activations
+		\item initializing weights in every layer with increasing variance can explode variance in activations
+	\end{itemize}
 	\item Depends on non-linearity and data normalization
 	\item \textbf{Xavier initialization}: to maintain data variance, the variance of the weights must be $1/d$ where $d$ is number of input neurons $\Rightarrow$ sample weight values from $w\sim\mathcal{N}(0,\sqrt{1/d})$
 	\item \textbf{Initialization for ReLU}: ReLU set half of the output neurons to 0 $\Rightarrow$ double the weight variance to compensate zero flat-area: $w\sim\mathcal{N}(0,\sqrt{2/d})$
+\end{itemize}
+\subsection{Hyperparameter Tuning}
+\begin{itemize}
+	\item \textbf{Learning Rate}: 
+	\begin{itemize}
+		\item Not too large, not too small
+		\item Learning rate per weight often advantageous
+		\item learning rate should satisfy: $\sum_{t}^{\inf} \eta_t = \inf$ and $\sum_{t}^{\inf} \eta_t^2 < \inf$; first term ensures large search, second term ensures convergence
+		\item Scheduling: constant, step decay, inverse decay: $\eta_t = \dfrac{\eta_0}{1+ \epsilon t}$, exponential decay: $\eta_t = \eta_0 e^{-\epsilon t}$
+	\end{itemize}
+	\item \textbf{Dropout Rate}: start small (if too high $\rightarrow$ underfit)
+	\item \textbf{Batch Size}: minimum 32, generally as big as GPU allows
+	\item \textbf{Number of Layers/Neurons}: for new problem start with moderate size
 \end{itemize}

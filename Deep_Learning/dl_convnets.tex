@@ -3,19 +3,30 @@
 	\item Images are stationary signals with spatial structure and huge dimensionality
 	\item Input dimensions are highly correlated (e.g. translation invariant)
 	\item Preserve spatial structure by convolutional filters, local connectivity (with shared weights) and being robust to local variances by spatial pooling
+	\item adding inductive bias to deal with spatial signals (use convolutional filters) $\rightarrow$ local conncectivity, parameter sharing, translation equivariance, spatial pooling to remain robust to local variations
+	\item Output dimensions: $$\begin{aligned} h_{out} &= \dfrac{h_{in}-h_f}{s} + 1 \\ w_{out} &= \dfrac{w_{in}-w_f}{s} + 1 \\ d_{out} &= n_f \\ d_f &= d_{in} \end{aligned}$$ where $n_f$ is the number of filters
+	\item Vanilla formulation: share weights spacially but not across channels
+	\item Convolutions reduce dimensionality $\rightarrow$ not too deep architectures $\rightarrow$ could use zero-padding to maintain dimensionality
+	\item Good practices: Resize image to size of power of 2, filter of 3 x 3, Stride = 1
+	\item MaxPooling:
+	\begin{itemize}
+		\item brings invariance to small transformations
+		\item reduces feature map size and makes computation faster
+	\end{itemize}
 \end{itemize}
 \subsection{Transfer Learning}
 \begin{itemize}
 	\item Use large datasets like ImageNet to learn useful features for other, smaller datasets
 	\item Prevent overfitting, even for large networks
-	\item Alternatively, we could also use a pre-trained network on task 1 as feature extractor for task 2 (same as freezing first layers)
+	\item Solution I: use trained net as initialization for new dataset
 	\item Which layer(s) to fine-tune?
 	\begin{itemize}
 		\item If both task have the same labels, we can initialize all layers. Otherwise, the classification layer (last layer) must be newly trained. If there is only very few data available, only fine-tune this layer
-		\item If datasets are very different, the fully connected layers need to be replaced
+		\item If datasets are very different, the fully connected layers need to be replaced (maybe only the last one)
 		\item First convolutional filters capture low-level information that mostly does not change over datasets. Mid-level convolutions can be fine-tuned if dataset is large enough
 	\end{itemize}
 	\item Use a smaller learning rate for pre-initialized layers as network starts already from a point close to the optimum. New layers can be trained with higher learning rate
+	\item Alternatively, we could also use a pre-trained network on task 1 as feature extractor for task 2 (same as freezing first layers); can also be used with external classifiers (use when new dataset is very small or when lack of computing power)
 \end{itemize}
 \subsection{Standard classification architectures}
 \subsubsection{VGGNet}

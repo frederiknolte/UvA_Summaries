@@ -31,8 +31,8 @@
 \subsection{Standard classification architectures}
 \subsubsection{VGGNet}
 \begin{itemize}
-	\item All filter sizes are $3\times 3$, as this is the smallest filter size, and is more parameter efficient to build up large filters, plus additional non-linearity between filters
-	\item $1\times 1$ convolutions used to increase non-linearity/complexity without increasing receptive field
+	\item All filter sizes are $3\times 3$, as this is the smallest filter size to still capture directionality, and is more parameter efficient to build up large filters, plus additional non-linearity between filters
+	\item $1\times 1$ convolutions used to increase non-linearity/complexity without increasing receptive field (linear transformation of input channels)
 \end{itemize}
 \begin{figure}[ht!]
 	\centering
@@ -48,7 +48,7 @@
 	\item Architecture consists of 9 Inception blocks
 	\item Solution for vanishing gradients: have intermediate classifiers that amplify the gradient signal for early layers
 	\item InceptionV2: $5\times 5$ replaced by two $3\times 3$ filters
-	\item InceptionV3: $1\times 3$ and $3\times 1$ filters instead of $3\times 3$
+	\item InceptionV3: $1\times 3$ and $3\times 1$ filters instead of $3\times 3$ (cheaper)
 	\item BatchNormalization has shown to be very helpful in this architecture
 \end{itemize}
 \begin{figure}[ht!]
@@ -59,16 +59,17 @@
 \end{figure}
 \subsubsection{ResNet/DenseNet/HighwayNet}
 \begin{itemize}
-	\item Deeper networks are harder to optimize, and might actually achieve worse results than shallow ones because of that (although learning identity in additional layers must lead to same results)
+	\item Deeper networks are harder to optimize, and might actually achieve worse results (also higher training errors) than shallow ones because of that (although learning identity in additional layers must lead to same results)
 	\item Better approach: try to model the difference that is learned in every layer $H(x) = F(x) + x$
 	\item Different ways for modeling $F(x)$. Most popular ones shown in Figure~\ref{fig:CNN_ResNet_blocks}. BatchNormalization has been shown to be very important because of vanishing gradients
+	\item Insights: identity shortcuts cheaper and almost equal to projection shortcuts, nets with skip connections converge faster, generally skip/residual connections are assets of deeper networks
 	\begin{figure}[ht!]
 		\centering
 		\includegraphics[width=0.7\textwidth]{figures/CNN_ResNet_blocks.png}
 		\caption{ResNet blocks}
 		\label{fig:CNN_ResNet_blocks}
 	\end{figure}
-	\item \textbf{HighwayNet} introduces a gate with learnable parameters to determine the importance of a layer: $H(x) = F(x) \cdot T(x) + x \cdot \left(1 - T\left(x\right)\right)$
+	\item \textbf{HighwayNet} introduces a gate with learnable parameters to determine the importance of a layer: $y = H(x, W_H) * T(x, W_T) + x * (1 - T(x, W_T))$
 	\item \textbf{DenseNet} uses skip connections to multiple forward layers. Creates complex blocks where last layer sees the input of all previous layers
 \end{itemize}
 \subsection{Tracking/Object detection}

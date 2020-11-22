@@ -7,7 +7,7 @@
 \begin{itemize}
 	\item Formally specified grammar that can generate all and only acceptable sentences of a natural language
 	\item A phrase can be bracketed into its internal structure: \textit{((the (big dog)) slept)}
-	\item Each subpart is a \textbf{constituent}: group of words/phrase behaving as a single unit 
+	\item Each subpart is a \textbf{constituent}: group of words/phrase forming a coherent unit 
 	\item Labels can be assigned to the internal structures (for instance, \textit{the big dog} is a noun phrase)
 \end{itemize}
 \subsubsection{Phrases and substitutability}
@@ -38,14 +38,14 @@
 	\item However, the grammar is not always unique 
 	\begin{itemize}
 		\item \textbf{Lexical ambiguity}: a word is more than once in the lexicon having different POS tag
-		\item \textbf{Structural ambiguity}: multiple possible analysis because of multiple rules for same non-terminals
+		\item \textbf{Structural ambiguity}: multiple possible parse trees because of multiple locations for same non-terminals in parse tree
 	\end{itemize}
 \end{itemize}
 \subsection{Chart parsing with CFGs}
 \begin{itemize}
 	\item Increase efficiency by recording all possible rules we could apply on a sentence
 	\item The \textbf{chart} is a record of all substructures that have ever been built during the parsing / stores partial results of parsing in a vector
-	\item An \textbf{edge} is a data structure that represents a rule application ,which includes:
+	\item An \textbf{edge} is a data structure that represents a rule application,   which includes:
 	\begin{itemize}
 		\item An id for referring to it
 		\item The outer left and right node in the sentence of the phrase on which the rule is applied
@@ -93,7 +93,7 @@
 	\item The correct parse/grammar structure is this one that end with the start symbol \texttt{S} from the first to the last node of the sentence
 	\item Important sub-technique: \textbf{Packing}
 	\begin{itemize}
-		\item Due to multiple rules with same input, we can have two identical edges that are just based on different daughters
+		\item We can have two identical edges that are just based on different daughters
 		\item Every following rule is then applied on both edges which is very inefficient
 		\item Thus, with \textit{packing} we change the daughter entries to a list of possible daughter lists 
 		\item For example, the edge 7 and 10 from the previous example can be combined:
@@ -102,13 +102,13 @@
 		\hline
 		7 & 1 & 3 & \texttt{VP} & \left\{\text{(2 6), (2 9)}\right\}\\
 		\end{array}$$
-		\item If a new daughter list is added, no new recursion/rule application needs to be done  
+		\item If a packable edge is added, no new recursion/rule application needs to be done  
 	\end{itemize}
 \end{itemize}
 \subsection{Probabilistic parsing}
 \begin{itemize}
-	\item For a single sentence with 20 or more words, we will get over 1000 analysis $\Rightarrow$ how do we determine the best/most probable analysis?
-	\item The traditional approach is it to grammar rules handwritten but they tend to often fail when parsing new sentences
+	\item For a single sentence with 20 or more words, we will get over 1000 analyses $\Rightarrow$ how do we determine the best/most probable analysis?
+	\item The traditional approach is handwritten grammar rules but they tend to often fail when parsing new sentences
 	\item  Current approaches: probabilistic CFG (PCFG) where every rule is augmented with a probability
 	\begin{figure}[ht]
 		\centering
@@ -117,7 +117,7 @@
 		\label{fig:probabilistic_cfg}
 	\end{figure}
 	\item The probability of a parse tree is the product of the probabilities of all the grammar rules that are used in the sentence derivation
-	\item Probabilistic CFGs help for \textit{disambiguation} as we can rank all analysis by probability and just pick the best (n) one(s)
+	\item Probabilistic CFGs help for \textit{disambiguation} as we can rank all analyses by probability and just pick the best (n) one(s)
 	\item Probabilities can also be used to speed up parsing (drop trees/substructures during parsing that already have a very low probability compared to other current substructures)
 \end{itemize}
 \subsubsection{Treebank PCFGs}
@@ -138,7 +138,7 @@
 \subsection{Dependency structures}
 \begin{itemize}
 	\item Context free grammars were based on phrase-structures in sentences
-	\item Another possible representation of parsing sentences is using directed/asymmetric binary grammatical relations that hold among the words 
+	\item Another possible representation of parsing sentences is using directed/asymmetric binary grammatical dependency relations that hold among the words 
 	\item A relation consists of 
 	\begin{itemize}
 		\item a head \texttt{H} (central word)
@@ -151,5 +151,7 @@
 		\caption{Dependency parsing. All relations are directed form head \texttt{H} to dependent \texttt{D}.}
 		\label{fig:dependency_parsing}
 	\end{figure}
+	\item Output is list of dependencies between words in the sentence
+	\item Why? $\rightarrow$ "Who did what to whom"
 	\item It is important to prevent parsing errors as these can significantly change the semantic of a sentence
 \end{itemize}

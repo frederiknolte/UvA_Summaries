@@ -1,19 +1,23 @@
 \section{Compositional semantics and discourse processing}
 % \subsection{Compositional semantics}
 \begin{itemize}
-	\item \textbf{Principle of Compositionality}: meaning of whole phrase derivable from meaning of its parts
-	\item Sentence structure conveys some meaning as well
+	\item \textbf{Principle of Compositionality}: meaning of whole phrase derivable from meaning of its parts and structure to combine them
 	\begin{itemize}
 		\item Different syntactic structures may have the same meaning, but similar syntactic structures can also have different meanings
+		\item words + structure = Phrase; phrases + structure = Sentence
 	\end{itemize}
 	\item Not all phrases are interpreted compositionally (e.g. \textit{kick the bucket}) but can be grouped together and viewed as one element
 	\item Meaning of a single word can depend on the composition (\textit{fast} programmer vs. \textit{fast} plane, metaphors,...)
+	\item Meaning transfers (e.g. Metaphor; swallow a grape vs swallow a story)
+	\item Recursive Composition ("Of course I care about how you imagined I thought you perceived I wanted you to feel")
+	\item Defining property of natural languages is productivity: licenses theoretically infinite set of possible expressions (through composition and recursion)
+	\item Caution: meaning of the whole is constructed from its parts and meaning of parts is derived from the whole
 \end{itemize}
 \subsection{Compositional distributional semantics}
 \begin{itemize}
-	\item Extending distributional semantics to phrases/sentences
+	\item Extending distributional semantics to phrases/sentences $\rightarrow$ phrase in same vector space as words
 	\item Unsupervised model $\Rightarrow$ general-purpose representations
-	\item Model composition in vector space. However, if we would model every sentence as independent, we would get an infinite dimensional space
+	\item Model composition in vector space. However, because of infinite amount of possible sentences, modelling each sentence as a separate vector is not feasible $\rightarrow$ model semantic composition in distributional space
 \end{itemize}
 \subsubsection{Vector mixture model}
 \begin{itemize}
@@ -37,7 +41,7 @@
 \end{figure}
 \subsubsection{Lexical function model}
 \begin{itemize}
-	\item Discriminate between words that meaning is determined by its context/distribution (e.g. nouns), and function words that are applied on the represented words as \textbf{lexical functions}
+	\item Discriminate between words whose meaning is determined by its context/distribution (e.g. nouns), and function words that are applied on the represented words as \textbf{lexical functions} (e.g. adjectives, adverbs, ...)
 	\item Example: $\underbrace{\textit{old}}_{\text{functional}} \underbrace{\textit{dog}}_{\text{distributional}} \Rightarrow$ apply function of \textit{old} on \textit{dog}
 	\item Lexical functions are parameter matrices (i.e. $\bm{A}_{\textit{old}}$) which are multiplied with the vector representation of nouns
 	\begin{figure}[ht]
@@ -47,23 +51,50 @@
 	\item Adjectives that does not change the meaning of a word are diagonal up to identity matrix $\Rightarrow$ element captures how features interact with each other given the adjective
 	\item The matrices are learned by comparing the representation of plain nouns to combination of noun and adjective. Pseudo-code algorithm:
 	\begin{enumerate}
-		\item Obtain a distributional vector $n_j$ for each noun $n_j$ in the lexicon.
+		\item Obtain a distributional vector $n_j$ for each noun $n_j$ in the vocabulary using conventional DSM.
 		\item Collect adjective noun pairs $(a_i,n_j)$ from the corpus.
 		\item Obtain a distributional vector $p_{ij}$ of each pair $(a_i,n_j)$ from the same corpus using a conventional DSM.
 		\item The set of tuples $\{(n_j,p_{ij})\}_j$ represents a dataset $\mathcal{D}(a_i)$ for the adjective $a_i$.
 		\item Learn matrix $\bm{A}_i$ from $\mathcal{D}(a_i)$ using linear regression by minimizing:
 		$$L(\bm{A}_i) = \sum\limits_{j\in \mathcal{D}(a_i)} ||p_{ij} - \bm{A}_i n_j||^2$$
 	\end{enumerate} 
-	\item Verbs can be represented as high-order tensors. If only subject is taken into consideration, it is a two-dimensional matrix. When also considering object, then it is three dimensional (or even higher)
+	\item Verbs can be represented as high-order tensors. If only subject is taken into consideration (intransitive verb), it is a two-dimensional matrix. When also considering object (transitive verb), then it is three dimensional (or even higher)
 	\item \textit{Polysemy} (different forms of a word) are mostly handled by a single representation. We assume that ambiguity can be handled as long as the context is given.
 	\item To identify \textit{metaphors}, two separate senses of every adjective can be learned (literal and metaphorical). We then map from literal to metaphorical by a linear transformation. 
 \end{itemize}
-\subsubsection{Compositional semantics in neural networks}
+\subsection{Compositional semantics with neural networks}
 \begin{itemize}
 	\item Supervised learning framework $\Rightarrow$ compositional representations are fine-tuned for specific application/task
 	\item Word representations are taken as input and processed within the network
 	\item Example tasks include sentiment classification, paraphrasing, machine translation, ...
 	\item Using recurrent and/or recursive networks (LSTMs, Tree-LSTMs, ...)
+\end{itemize}
+\subsubsection{BOW}
+\begin{itemize}
+	\item does not take word order into account, dimensions of word vector are interpretable (are equal to the classes)
+	\item Class Prediction: $\mathrm{argmax} \sum_t \mathbf{x}_t + \mathbf{b}$
+\end{itemize}
+\subsubsection{CBOW}
+\begin{itemize}
+	\item use word representations of higher-dimensional space $\rightarrow$ not interpretable
+	\item Class Prediction: $\mathrm{argmax} \mathbf{W} (\sum_t \mathbf{x}_t) + \mathbf{b}$
+	\item or concatenate instead of sum $\rightarrow$ vector size dependent on sentence length $\rightarrow$ not practicable and not sensible (sentence in different vector space than words, one vector space per sentence length in dataset)
+\end{itemize}
+\subsubsection{Deep CBOW}
+\begin{itemize}
+	\item additive model -> no word order, task-specific word representations of arbitrary dimensionality, dimensions not interpretable, more layers and non-linearities -> prediction is hard to trace back
+	\item Class Prediction: $\mathbf{W"} \mathrm{tanh}(\mathbf{W'} \mathrm{tanh}(\mathbf{W} (\sum_t \mathbf{x}_t) + \mathbf{b}) + \mathbf{b'}) + \mathbf{b"}$
+\end{itemize}
+\subsubsection{Sentence Representations with NNs}
+\begin{itemize}
+	\item BOW: sentence representations are order-independent function of word representations
+	\item Sequence Models: sentence representations are order-sensitive function of sequence of word Representations
+	\item Tree-structured Models: sentence representations are a function of the word representations, sensitive to the syntactic structure of the sentence
+\end{itemize}
+\subsubsection{Tree-structured Models}
+\begin{itemize}
+	\item helpful in disambiguation: sentence similar in surface form but different underlying structure
+	\item requires syntactic parse trees
 \end{itemize}
 \subsection{Discourse structure}
 \begin{itemize}

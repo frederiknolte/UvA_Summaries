@@ -28,6 +28,20 @@
 	\caption{SGD vs GD}
 	\label{fig:SGDvsGD}
 \end{figure}
+\subsection{Vanishing/Exploding Gradients}
+\begin{itemize}
+	\item The gradients each depend on a product of Jacobian matrices/tensors (i.e. the previous gradients); The number of products increases with the number of layers
+	\item To analyze the relation between gradient norm and depth L, analyze the spectral norm of the Jacobian
+	\item Spectral norm is the largest of the singular values (= square roots of matrix eigenvalues; gives an estimate of how much larger an input can get by the transformation) $\rightarrow$ compute with SVD algorithm
+	\item Assuming a linear module with element-wise nonlinearity $h$: $\mathbf{a}_j = h(\mathbf{w}_j * \mathbf{a}_{j-1})$, the spectral norm of the Jacobian is bounded by: $$\left\| \dfrac{\partial \mathbf{a}_j}{\partial \mathbf{a}_{j-1}} \right\| \leq ||\mathbf{w}_j^T || * ||\mathrm{diag}(h'(\mathbf{a}_{j-1}))||$$
+	\item The final spectral norm is bounded by:
+		$$
+		\left\| \dfrac{\partial L}{\partial w_l} \right\| \propto \left\| \prod_{j=l+1}^{L} \dfrac{\partial a_j}{\partial a_{j-1}} \right\| \leq \prod_{j=l+1}^{L} || \mathbf{w}_j^T|| \prod_{j=l+1}^{L} ||\mathrm{diag}(h'(\mathbf{a}_j))|| \\ = \prod_{j=l}^{L} \sigma_j^a * \sigma_j^{h'}$$ 
+	where $\sigma_j$ is the maximum singular value for module $j$.
+	\item for singular values $\sigma_j < 1$ the gradients could become very small with increasing $L$ $\rightarrow$ slow learning); for singular values $\sigma_j > 1$ the gradients could become very large with increasing $L$ ($\rightarrow$ unstable optimization, oscillations, divergence)
+	\item Effect are expoential w.r.t. layer depth $\rightarrow$ layers close to loss have less exponentiation (little effect), layers far from loss have large effect
+	\item Problem: While this can be solved by having different learning rate per module depending on its depth, small gradient not necessarily means difficulty in optimization (can also mean convergence)
+\end{itemize}
 \subsection{Advanced optimizations}
 \subsubsection{Gradient-based optimization}
 \begin{itemize}
@@ -222,4 +236,23 @@
 	\item \textbf{Dropout Rate}: start small (if too high $\rightarrow$ underfit)
 	\item \textbf{Batch Size}: minimum 32, generally as big as GPU allows
 	\item \textbf{Number of Layers/Neurons}: for new problem start with moderate size
+\end{itemize}
+\subsection{Depth, Trainability and generalization}
+\begin{itemize}
+	\item Depth
+	\begin{itemize}
+	\item Skip connections make loss surface less rough and gradients are more representative of the direction to good local minima (with skip connections, the gradient of the previous layer is carried to the next module untouched)
+	\item deeper architectures have uneven, chaotic surfaces
+	\item removing skip layers fragments and elongates loss surface $\rightarrow$ would need very good initialization to still perform well
+	\item having flat minima leads to better generalization
+	\end{itemize}
+	\item Width
+	\begin{itemize}
+	\item In wider networks, the depth has similar effect
+	\item width, however, makes loss surface even smoother/flatter
+	\end{itemize}
+	\item Optimizer
+	\begin{itemize}
+		\item weight decay encourages optimization trajectory perpendicular to isocurves (without, often in parallel to isocurves)
+	\end{itemize}
 \end{itemize}

@@ -1,6 +1,6 @@
 \section{Lexical and distributional semantics}
 \begin{itemize}
-	\item \textbf{Compositional semantics}: meaning of phrase/sentence
+	\item \textbf{Compositional semantics}: meaning of phrase/sentence constructed out of meaning of individual words
 	\item \textbf{Lexical semantics}: meaning of individual words
 \end{itemize}
 \subsection{Approaches for lexical meaning}
@@ -18,7 +18,7 @@
 	\begin{itemize}
 		\item Limited, especially for special cases (i.e. what is the Pope?)
 		\item Very expensive for large corpus
-		\item For some words, it is almost impossible to find a good formalization
+		\item For some concepts, it is almost impossible to find a good formalization (tomato, democracy)
 	\end{itemize}
 	\item Alternative: \textbf{Prototype theory}
 	\begin{itemize}
@@ -38,11 +38,12 @@
 	\item \textbf{Meronomy}: PART-OF relation (\textit{Example}: arm is a meronym of body)
 	\item \textbf{Synonymy}: Words can be exchanged without changing the meaning of a sentence/phrase
 	\item \textbf{Antonymy}: Opposite meanings (\textit{Example}: big vs. little)
+	\item \textbf{Near-Synonomy/Similarity}: e.g. exciting/thrilling
 \end{itemize}
 \subsubsection{WordNet}
 \begin{itemize}
 	\item Large-scale corpus for English resource
-	\item Handconstructed
+	\item Hand-constructed
 	\item Organized in synsets: sets of synonyms
 	\item Synsets are connected by semantic relations
 	\item Similarity of words is the similarity of synsets
@@ -52,6 +53,8 @@
 \begin{itemize}
 	\item A word can mean different things based on the sentence/context it is used in
 	\item Meaning of words is not fixed, but dynamically adapted by the context
+	\item Homonymy: unrelated word senses (bank (raised land) vs bank (financial institution))
+	\item Polysemy: related but distinct (bank (financial institution) vs bank (in casino)) (TODO Check again)
 	\item \textbf{Regular polysemy}: mechanisms to apply on words to fit into context
 	\begin{itemize}
 		\item \textit{Zero-derivation}: verb $\leftrightarrow$ noun without changing word. Example: ``\textit{tango}''
@@ -59,11 +62,11 @@
 		\item \textit{Metonymy}: use an entity to actually refer to other aspects of it. 
 		Example: ``\textit{drinking his glass}''
 	\end{itemize}
-	\item \textbf{Word sense disambiguation}: derive meaning of word in context
+	\item \textbf{Word sense disambiguation (WSD)}: derive meaning of word in context
 	\begin{itemize}
-		\item \textit{Supervised} (most common) $\to$ predefined list of senses (i.e. WordNet), and train model on \textit{large} corpus. Problem: we have to learn a new classifier for every word!
+		\item \textit{Supervised} (most common) $\to$ predefined list of senses (i.e. WordNet), and train model on \textit{large} corpus. Problem: we have to learn a new classifier for every word! $\rightarrow$ large corpus needed
 		\item \textit{Semi-supervised} $\to$ annotate small dataset, bootstrap from there. Might be helpful as some instances have no single/discrete meaning.
-		\item \textit{Unsupervised} $\to$ induce sense by clustering of word occurences. Usually, the result is either too fine-grained or coarse-grained for most word (only work great for frequent words)
+		\item \textit{Unsupervised} $\to$ induce sense by clustering of word occurences. Usually, the result is either too fine-grained or coarse-grained for most words (only works great for frequent words)
 	\end{itemize}
 \end{itemize}
 \subsubsection{Semi-Supervised WSD: Yarowsky algorithm}
@@ -71,6 +74,8 @@
 	\item Using bootstrapping which needs only a very small hand-labeled training set
 	\item Still, learns a classifier for every word $\Rightarrow$ no generalization!
 	\item Also, define features (see notion of context) for every word to determine its meaning
+	\item Needs predefined word senses (not theoretically sound)
+	\item Needs large training corpus
 	\item \textbf{Algorithm iteration}: 
 	\begin{enumerate}[start=0]
 		\item Given a small initial seed set $\Lambda_0$ of labeled instances of each sense, and a much larger unlabeled corpus $V_0$
@@ -78,7 +83,7 @@
 		\item Use trained classifier to label $V_0$
 		\item Select the examples in $V_0$ that the classifier is most confident on
 		\begin{enumerate}
-			\item Reliability of a prediction defined as $\log\left(\frac{p(a|w)}{p(b|w)}\right)$ for word w and possible senses $a$ and $b$
+			\item Reliability of a prediction defined as $\log\left(\frac{p(a|f_i)}{p(b|f_i)}\right)$ for feature $f_i$ of word w and possible senses $a$ and $b$
 			\item Rank reliabilities of all predictions and choose $n$ best
 		\end{enumerate}
 		\item Remove chosen examples from $V_0\Rightarrow V_1$, and add them to the training set $\Rightarrow\Lambda_1$
@@ -101,7 +106,8 @@
 	\item Probabilistic models for semantics
 	\item Distributional hypothesis about word meaning: the meaning of a word is determined by its context $\Rightarrow$ similar meanings have similar contexts
 	\item Thus, distributions are a good conceptual representation if you believe that ‘the meaning of a word is given by its usage’ $\Rightarrow$ Corpus-dependent like different culture, domains, ...
-	\item Distributions can encode lexical- and world knowledge, but mostly only partial lexical semantics 
+	\item Distributions can encode lexical- and world knowledge, but mostly only partial lexical semantics
+	\item Distributions do not encode perceptual knowledge
 	\item Techniques: Count-based models and prediction models
 \end{itemize}
 \subsubsection{Count-based models}
@@ -124,8 +130,8 @@
 	\begin{enumerate}
 		\item \textit{Word windows}: n words on either side of the lexical item, and count occurrences of words
 		\item \textit{Filtered word windows}: n words, but remove irrelevant words based on POS-tag or stop-list (don't need to extend window)
-		\item \textit{Lexeme windowing}: word windows (filtered or unfiltered), but with using stemming (mostly lead to more robust models)
-		\item \textit{(Syntactic) dependencies}: context with dependency structure it belongs to (directed link between heads and dependents). Can be used with different extends\\
+		\item \textit{Lexeme window}: word windows (filtered or unfiltered), but with using stemming (mostly lead to more robust models)
+		\item \textit{(Syntactic) dependencies}: context for a lexical item is dependency structure it belongs to (directed link between heads and dependents). Can be used with different extends\\
 		Example: ``The prime minister acknowledged the question'' \\
 		- [prime\_a 1, acknowledge\_v 1] (a for adjectives, v for verbs)\\
 		- [prime\_a\_mod 1, acknowledge\_v\_subj 1] (mod for modifiers, subj for verb in relation to subject)\\
@@ -137,10 +143,12 @@
 		\item \textit{Binary model}: if $c$ co-occurs with word $w$, value of entry is 1, else 0
 		\item \textit{Basic frequency model}: number of times $c$ co-occurs (probably normalized)
 		\item \textit{Characteristic model}: weights express how characteristic a given context is for a word $w$\\
-		\item \textit{Pointwise Mutual Information (PMI)}: example of characteristic model. Comparing probability of both words occur together compared to occurring alone.\\
-		$$PMI(w,c)=\log \frac{P(w,c)}{P(w)P(c)} = \log \frac{P(c|w)}{P(c)} \text{\hspace{5mm} where \hspace{5mm}}P(c) = \frac{f(c)}{\sum_k f(c_k)}, P(c|w) = \frac{f(w,c)}{f(w)}$$
-		$$\Rightarrow PMI(w,c) = \log \frac{f(w,c)\sum_k f(c_k)}{f(w)f(c)}$$
-		$PPMI\to$ only use positive values, $PPMI(w,c) =\max\left(PMI(w,c),0\right)$
+		\begin{itemize}
+			\item \textit{Pointwise Mutual Information (PMI)}: example of characteristic model. Comparing probability of both words occur together compared to occurring alone. Overestimates rare words/contexts\\
+			$$PMI(w,c)=\log \frac{P(w,c)}{P(w)P(c)} = \log \frac{P(c|w)}{P(c)} \text{\hspace{5mm} where \hspace{5mm}}P(c) = \frac{f(c)}{\sum_k f(c_k)}, P(c|w) = \frac{f(w,c)}{f(w)}$$
+			$$\Rightarrow PMI(w,c) = \log \frac{f(w,c)\sum_k f(c_k)}{f(w)f(c)}$$
+			$PPMI\to$ only use positive values, $PPMI(w,c) =\max\left(PMI(w,c),0\right)$
+		\end{itemize}
 	\end{enumerate}
 	\item \textbf{Semantic space}: what are possible contexts
 	\begin{enumerate}
@@ -160,7 +168,7 @@
 	\item \textbf{Short dense} embeddings with \textbf{latent} dimensions 
 	\begin{itemize}
 		\item Easier to use as features with machine learning
-		\item Better generalization than simple counting $\Rightarrow$ capturing more complex relations like synonym
+		\item Better generalization than simple counting $\Rightarrow$ capturing more complex relations like synonyms which would be distinct dimensions in count-based models
 	\end{itemize}
 	\item One example for prediction-based models is skip-gram, also known as word2vec (see later section)
 \end{itemize}
@@ -192,6 +200,7 @@
 	\end{itemize}
 	\item Small context sizes (small windows, syntactic dependencies) lead to clusters of synonyms (words that can be replaced)
 	\item Large context sizes lead to \textbf{topical similarity} (words belonging to the same topic)
+	\item Uses word sense induction and disambiguation, modelling predicate-argument structure, identifying figurative language and idioms
 \end{itemize}
 
 \subsubsection{Skip-gram}
@@ -227,9 +236,9 @@
 	\end{figure}
 	\item However, the problem here is that for a large vocabulary size, the denominator of the softmax is very expensive to calculate $\Rightarrow$ \textbf{negative sampling}
 	\begin{itemize}
-		\item Approximate denominator by sampling $k$ random words from vocabulary (probability of sampling for a word is mostly connected to its unigram probability/frequency in the corpus like $\text{count}^{\alpha}(w)$ with for example $\alpha=0.75$)
+		\item Approximate denominator by sampling $k$ random negative contexts from vocabulary for each target word and positive context (probability of sampling for a context word is mostly connected to its unigram probability/frequency in the corpus like $\text{count}^{\alpha}(w)$ with for example $\alpha=0.75$)
 		\item Dataset consists therefore out of words pair which are either positive or negative examples for context + word (note that we do not distinguish between the probability calculation of $w_{t-2}$ and $w_{t-1}$ for example)
-		\item We convert the classification task into predicting whether a context pair is a positive or negative example from the corpus
+		\item We convert the classification task over multiple classes into predicting whether a context pair is a positive or negative example from the corpus
 		$$p\left(+|w_j, w_k\right) = \sigma(c_k\cdot v_j) = \frac{1}{1 + \exp(-c_k\cdot v_j)}$$
 		$$p\left(-|w_j, w_k\right) = 1 - p\left(+|w_j, w_k\right) = \frac{1}{1 + \exp(c_k\cdot v_j)}$$
 		$$\Rightarrow \arg\max \sum\limits_{\left(w_j, w_k\right)\in D_{+}} \log p\left(+|w_k,w_j\right) + \sum\limits_{\left(w_j, w_k\right)\in D_{-}} \log p\left(-|w_k,w_j\right) $$

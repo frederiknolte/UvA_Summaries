@@ -424,11 +424,11 @@ INPUT /Users/frederiknolte/Documents/UvA_Summaries/Natural_Language_Processing_1
 INPUT /Users/frederiknolte/Documents/UvA_Summaries/Natural_Language_Processing_1/figures/compositional_semantics_lexical_function_models.png
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/tfm/bitstrea/charter/bchri7t.tfm
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/tfm/bitstrea/charter/bchri7t.tfm
+INPUT /Users/frederiknolte/Documents/UvA_Summaries/Natural_Language_Processing_1/figures/compositional_semantics_lexical_function_models_adjectives.png
+INPUT /Users/frederiknolte/Documents/UvA_Summaries/Natural_Language_Processing_1/figures/compositional_semantics_lexical_function_models_adjectives.png
+INPUT /Users/frederiknolte/Documents/UvA_Summaries/Natural_Language_Processing_1/figures/compositional_semantics_lexical_function_models_adjectives.png
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/vf/bitstrea/charter/bchr7t.vf
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/tfm/bitstrea/charter/bchr8r.tfm
-INPUT /Users/frederiknolte/Documents/UvA_Summaries/Natural_Language_Processing_1/figures/compositional_semantics_lexical_function_models_adjectives.png
-INPUT /Users/frederiknolte/Documents/UvA_Summaries/Natural_Language_Processing_1/figures/compositional_semantics_lexical_function_models_adjectives.png
-INPUT /Users/frederiknolte/Documents/UvA_Summaries/Natural_Language_Processing_1/figures/compositional_semantics_lexical_function_models_adjectives.png
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/vf/bitstrea/charter/bchr7t.vf
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/tfm/bitstrea/charter/bchr8r.tfm
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/vf/bitstrea/charter/bchri7t.vf
@@ -482,6 +482,7 @@ INPUT /usr/local/texlive/2019/texmf-dist/fonts/enc/dvips/base/8r.enc
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/type1/bitstrea/charter/bchb8a.pfb
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/type1/bitstrea/charter/bchr8a.pfb
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/type1/bitstrea/charter/bchri8a.pfb
+INPUT /usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb
 INPUT /usr/local/texlive/2019/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb

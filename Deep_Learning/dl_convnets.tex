@@ -2,16 +2,21 @@
 \begin{itemize}
 	\item Images are stationary signals with spatial structure and huge dimensionality
 	\item Input dimensions are highly correlated (e.g. translation invariant)
-	\item Preserve spatial structure by convolutional filters, local connectivity (with shared weights) and being robust to local variances by spatial pooling
 	\item adding inductive bias to deal with spatial signals (use convolutional filters) $\rightarrow$ local conncectivity, parameter sharing, translation equivariance, spatial pooling to remain robust to local variations
 	\item Output dimensions: $$\begin{aligned} h_{out} &= \dfrac{h_{in}-h_f}{s} + 1 \\ w_{out} &= \dfrac{w_{in}-w_f}{s} + 1 \\ d_{out} &= n_f \\ d_f &= d_{in} \end{aligned}$$ where $n_f$ is the number of filters
-	\item Vanilla formulation: share weights spacially but not across channels
+	\item Vanilla formulation: share weights spacially but not across channels (surface-wise local, depth-wise global)
 	\item Convolutions reduce dimensionality $\rightarrow$ not too deep architectures $\rightarrow$ could use zero-padding to maintain dimensionality
 	\item Good practices: Resize image to size of power of 2, filter of 3 x 3, Stride = 1
 	\item MaxPooling:
 	\begin{itemize}
 		\item brings invariance to small transformations
 		\item reduces feature map size and makes computation faster
+	\end{itemize}
+	\item Effective receptive field: number of actual pixels contributing to activation in l-th layer
+	\begin{itemize}
+		\item large filter can be replaced by deeper stack of successive smaller filters
+		\item two 3x3 filters have receptive field of one 5x5
+		\item three 3x3 filters have receptive field of one 7x7
 	\end{itemize}
 \end{itemize}
 \subsection{Transfer Learning}
@@ -72,6 +77,15 @@
 	\item \textbf{HighwayNet} introduces a gate with learnable parameters to determine the importance of a layer: $y = H(x, W_H) * T(x, W_T) + x * (1 - T(x, W_T))$
 	\item \textbf{DenseNet} uses skip connections to multiple forward layers. Creates complex blocks where last layer sees the input of all previous layers
 \end{itemize}
+\subsection{Depth, Trainability, Generalization}
+\item Skip-connections make loss surface less rough
+\item gradients more representative of the direction to good local minima
+\item Effect of depth:
+\begin{itemize}
+	\item deeper architectures have more uneven, chaotic loss surface
+	\item removing skip-connections fragments and elongates loss surface
+\end{itemize}
+\item Width makes loss surface smoother and flatter
 \subsection{Tracking/Object detection}
 \subsubsection{Fast R-CNN}
 \begin{itemize}

@@ -1,4 +1,4 @@
-\section{Recurrent and Graph Neural Networks}
+\section{Recurrent Networks, Attention and Graph Neural Networks}
 \subsection{Backpropagation through time}
 \begin{itemize}
 	\item Sequences are of arbitrary length. Standard networks like CNN mostly work on fixed input dimensionality
@@ -45,6 +45,7 @@
 	\item The problem with RNNs are that the gradients at time step $t$ depend on $c_{t-1}$ which also depends on $w$. However, the gradients are calculated with the assumption that $w$ stays the same for the previous time steps.
 	\item This error can easily accumulate over many time steps so that in very long sequences, the gradients for the last steps are inaccurate
 	\item Reduce learning rate/fewer updates, but this leads to slower training
+	\item truncate gradient unrolling to $t_{trunc}$ and replace all $t$ before specific time step with this
 \end{itemize}
 \subsubsection{Vanishing gradients}
 \begin{itemize}
@@ -56,7 +57,7 @@
 	$$\left\lVert \pd{c_{t+1}}{c_{t}}\right\rVert \leq \left\lVert W^T\right\rVert \cdot \left\lVert \text{diag}\left(\pd{\sigma\left(c_t\right)}{c_t}\right)\right\rVert < \frac{1}{\gamma}\gamma = 1$$
 	\item This term is exponentiated with the number of time steps. Thus, long sequences suffer even more of vanishing gradients $\Rightarrow$ learn only short-term relationships
 	\item If however $\left\lVert \pd{c_{t+1}}{c_{t}}\right\rVert > 1$ because of $\left\lVert W^T\right\rVert \gg 1/\gamma$, then we can get exploding gradients
-	\item Quick fix for exploding gradients: clip gradient norm. However, there the counterpart can happen where we only focus on long-term relationships
+	\item Quick fix for exploding gradients: clip gradient norm. However, there the counterpart can happen where we only focus on long-term relationships; can not rescale vanishing gradient because this is gradient accuracy issue and does not count as gradient in the first place
 \end{itemize}
 \subsubsection{Long Short-Term Memory}
 \begin{itemize}
@@ -71,6 +72,42 @@
 		\caption{Visualization of a LSTM cell}
 		\label{fig:RNN_LSTM}
 	\end{figure}
+\end{itemize}
+\subsection{Attention}
+\begin{itemize}
+	\item Attention reweights input:
+	\begin{equation*}
+		\begin{split}
+		\mathrm{score}(s_t,h_i) &= v_a^T \mathrm{tanh}(W_a[s_t;h_i]) \\
+		a_{ti} &= \mathrm{softmax}(\mathrm{score}(s_{t-1},h_i)) \\
+		c_t &= \sum_i a_{ti} h_i
+		\end{split}
+	\end{equation*}
+	\item Self-Attention:
+	\begin{equation*}
+		\begin{split}
+			y_i &= \sum_j w_{ij} x_j \\
+			w_{ij} &= \dfrac{\exp (x_i x_j)}{\sum_k \exp (x_i x_k)}
+		\end{split}
+	\end{equation*}
+	\item Dot product Attention
+	\begin{equation*}
+		\begin{split}
+			q_i &= W_q x_i \\
+			k_i &= W_k x_i \\
+			v_i &= W_v x_i \\
+			w_{ij}^' &= \dfrac{q_i^T k_j}{\sqrt{d}} \\
+			w_{ij} &= \dfrac{\exp(w_{ij}')}{\sum_k \exp(w_{ik}^')} \\
+			y_i &= \sum_j w_ij v_j
+		\end{split}
+	\end{equation*}
+	\item Multihead attention replaces weight vectors with weight matrices $\rightarrow$ each matrix row is separate attention
+	\item Transformers:
+	\begin{itemize}
+		\item stackable architecture with blocks containing self-attention and MLPs
+		\item parallelizable, better efficiency, able to capture long-term dependencies
+		\item quadratic cost to input length
+	\end{itemize}
 \end{itemize}
 \subsection{Graph Neural Networks}
 \begin{itemize}

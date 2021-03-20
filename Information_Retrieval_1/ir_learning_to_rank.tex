@@ -1,7 +1,7 @@
 \section{Learning to Rank}
 \begin{itemize}
 	\item Main issue in information retrieval is to determine whether document $d$ is relevant for query $q$
-	\item Common relevance signals include TF-IDF, BM25, document popularity etc.
+	\item Common relevance signals include TF-IDF, BM25, document popularity, page rank, spam identifier etc.
 	\item But: what signals to use/how to combine these signals? There is not a single relevance signal "to rule them all" $\implies$ combine all signals in a model
 	\item Simplest combination method: linear model $f(\bm{d},\bm{\theta}) = \sum\limits_{i=1}^{|d|} \theta_i d_i$ where $\bm{d}$ represents the different signals for document-query pair
 	\item Task: find the optimal parameter set $\bm{\theta}$, commonly by Machine Learning techniques (linear regression)
@@ -9,39 +9,99 @@
 \subsection{Offline Learning To Rank}
 \begin{itemize}
 	\item Given an annotated dataset of relation document and relevance/ranking
-	\item There are three different approaches
-	\begin{enumerate}
-		\item \textbf{Pointwise}: optimize models $f(\bm{d},\bm{\theta})$ to predict relevancy of a document. This can be recasted in a regression problem with loss:
-		$$\mathcal{L}=\sum_{\bm{d}} \left(f(\bm{d},\bm{\theta}) - \text{relevancy}(d,q)\right)^2$$
-		However, this approach does not consider the application of ranking where only the final order is important, but not the single scores.
-		\item \textbf{Pairwise}: optimize regarding the total order of the documents and not specific relevance scores. The loss can be expressed by:
-		$$\mathcal{L}=\sum_{d\succ d'}\left[f(\bm{d'},\bm{\theta}) - f(\bm{d},\bm{\theta})\right]$$ 
-		where $d\succ d'$ means that $d'$ is the successor of $d$ in the labeled ranking. Nevertheless, this method does not take into account that only a subpart (top 10) of the collection is actually presented to the user.
-		\item \textbf{Listwise}: optimize regarding ranking metrics like $DCG$. Thus, the loss could be:
-		$$\mathcal{L} = -nDCG(f(\cdot,\bm{\theta}))$$
-		The problem is that most ranking metrics are not differentiable. There are heuristic approaches to still optimize with respect to such metrics. 
-	\end{enumerate}
-	\item Problems with offline Learning to Rank: similar to offline evaluation in Section~\ref{sec:offline_eval_problems}
+	\item expensive and time-consuming
+	\item provides ground-truth
+	\item There are three different approaches: pointwise, pairwise, listwise
+\end{itemize}
+\subsubsection{Pointwise} 
+\begin{itemize}
+	\item optimize models $f(\bm{d},\bm{\theta})$ to predict relevancy of a single document. This can be recasted in a regression problem with loss:
+	$$\mathcal{L}=\sum_{\bm{d}} \left(f(\bm{d},\bm{\theta}) - \text{relevancy}(d,q)\right)^2$$
+	\item Could also use classification approach to predict rank of document
+	$$\mathcal{L}=\sum_{\bm{q,d}} - \log \Big( \dfrac{e^{\gamma \cdot s_{y_{q,d}}}}{\sum_{y \in Y} e^{\gamma \cdot s_y}} \Big)$$
+	where $s_{y_{q,d}}$ is the model's score for label $y_{q,d}$.
+	\item \textbf{Problems:} These approaches do not consider the application of ranking where only the final order is important, but not the single scores. These approaches do not optimize ranking quality.
+\end{itemize}
+\subsubsection{Pairwise} 
+\begin{itemize}
+	\item The model scores documents independently ($f(d_i) = s_i$) but loss is based on document pairs and minimizes number of incorrect inversions; i.e. optimize regarding the total order of the documents and not specific relevance scores
+	\item The loss can be expressed by: 
+	$$\mathcal{L}_{ij} = \phi(s_i - s_j)$$ (more general)
+	\item The functions could be:
 	\begin{itemize}
-		\item All described methods require an annotated dataset which contains either relevance labels for each document-query pair or a ranking over the whole collection.
-		\item Creating such is time consuming and expensive
-		\item Impossible to personalize for a user (everyone prefers a little bit different documents). Also, annotators and users might disagree in some points $\implies$ dataset does not fully reflect user behavior
-		\item Can change over time
+		\item Hinge function $\phi(z) = \mathrm{max}( 0,1-z)$
+		\item Exponential function $\phi(z) = e^{-z}$
+		\item Logistic function $\phi(z) = log(1+e^{-z})$
 	\end{itemize}
+	\item \textbf{RankNet}
+	\begin{itemize}
+		\item RankNet is pairwise loss function
+		\item predicted probabilities: $P_{ij} = P(s_i > s_j) = \dfrac{1}{1+\exp (-\gamma (s_i - s_j))} $, desired probabilities $\bar{P}_{ij}=1$ and $\bar{P}_{ji}=0$
+		\item then compute cross-entropy between $\bar{P}$ and $P$:
+		$$\mathcal{L} = \sum_{d_i \succ d_j} -\bar{P}_{ij} \log (P_{ij}) - \bar{P}_{ji} \log (P_{ji}) = \sum_{d_i \succ d_j} \log (1 + \exp (-\gamma (s_i - s_j)))$$
+		\item There is a factorization of RankNet:
+		\item Let $S_{ij} \in \{-1,0,1\}$ indicate preference between $d_i$ and $d_j$
+		\item then $\bar{P}(d_i \succ d_j) = \dfrac{1}{2} (1 - S_{ij})$
+		\item and $P(d_i \succ d_j) = \dfrac{1}{1+\exp (-\gamma (s_i - s_j))}$
+		\item thus $\mathcal{L}_{ij} = \dfrac{1}{2}(1 - S_{ij}) \gamma (s_i - s_j) + \log (1 + \exp (-\gamma (s_i - s_j)))$
+		\item Drawbacks of RankNet:
+		\begin{itemize}
+			\item RankNet is based on virtual probabilities $P(d_i \succ d_j)$ (but not a big deal)
+		\end{itemize}
+	\end{itemize}
+	\item \textbf{Drawbacks of pairwise in general:} it is much more important to get the correct ordering at the top documents than at bottom documents but pairwise loss does not make this distinction $\rightarrow$ could prefer ranking where bottom documents are correctly ordered over ranking where top documents are correctly ordered
+\end{itemize}
+\subsubsection{Listwise}
+\begin{itemize}
+	\item optimize regarding ranking metrics like $DCG$ directly. Thus, the loss could be:
+	$$\mathcal{L} = -nDCG(f(\cdot,\bm{\theta}))$$
+	\item The problem is that most ranking metrics are not differentiable. There are heuristic approaches to still optimize with respect to such metrics.
+	\item \textbf{LambdaRank}
+	\begin{itemize}
+		\item for training, not costs themselves are needed but only the gradients (gradient should be bigger for pairs of documents that have a big impact on nDCG by swapping positions)
+		\item Multiply actual gradients with change in nDCG by swapping rank positions of two documents:
+		$$\lambda_{\mathrm{LambdaRank}} = \lambda_{\mathrm{RankNet}} \cdot |\Delta nDCG|$$
+		\item works also with other metrics (e.g. delta precision)
+	\end{itemize}
+	\item \textbf{ListNet and ListMLE}
+	\begin{itemize}
+		\item create probabilistic model for ranking, which is diff'ble
+		\item sample documents from Plackett-Luce distribution (without replacement i.e. after sampling, document is removed from denominator):
+		$$P(d_i) = \dfrac{\phi(s_i)}{\sum_{d_j \in D}\phi(s_j)}$$
+		\item ListNet: compute distribution over all possible permutations based on model score and ground-truth. Then minimize KL-divergence between both distributions (very expensive so only look at topK (mostly only top1))
+		\item ListMLE: compute likelihood of ideal ranking based on ground-truth
+	\end{itemize}
+\end{itemize}
+\subsubsection{Problems with offline Learning to Rank:}
+\begin{itemize}
+	\item similar to offline evaluation in Section~\ref{sec:offline_eval_problems}
+	\item All described methods require an annotated dataset which contains either relevance labels for each document-query pair or a ranking over the whole collection.
+	\item Creating such is time consuming and expensive
+	\item unethical to create for privacy-sensitive settings
+	\item Impossible to personalize for a user (everyone prefers a little bit different documents). Also, annotators and users might disagree in some points $\implies$ dataset does not fully reflect user behavior
+	\item Can change over time
+	\item might generally not reflect user preferences
 \end{itemize}
 \subsection{Online Learning to Rank}
 \begin{itemize}
 	\item Learn from implicit user feedback
+	\item virtually free and easy to obtain
+	\item indicative of preferences but hard to interpret
 	\begin{itemize}
 		\item Might be noisy
-		\item Consider position bias (higher rank is more frequently clicked) and selection bias (only a limited set of documents is presented to the user)
+		\item Biased
+		\begin{itemize}
+			\item position bias (higher rank is more frequently clicked) 
+			\item selection bias (only a limited set of documents is presented to the user)
+			\item presentation bias (results are presented differently e.g. different movie sizes in Netflix)
+		\end{itemize}
 	\end{itemize}
 	\item Online Learning to Rank methods can learn from user interactions, \textbf{and} control the results which are displayed/presented to the user
 	\item Thus, these methods can be more efficients as they control over what data is actually gathered
 	\item A general online learning to rank technique is visualized in Figure~\ref{img:learning_to_rank_online_overview}
 	\begin{figure}[ht]
 		\centering
-		\includegraphics[width=0.4\textwidth]{figures/learning_to_rank_online_overview.png}
+		\includegraphics[width=0.6\textwidth]{figures/learning_to_rank_online_overview.png}
 		\caption{Overview of the general concept of online learning to rank}
 		\label{img:learning_to_rank_online_overview}
 	\end{figure}

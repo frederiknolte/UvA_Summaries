@@ -1,0 +1,135 @@
+\section{Recommender Systems}
+\subsection{Evaluation}
+\begin{itemize}
+    \item if ratings are available, could use MAE/RMSE on test set
+    \item it is more common to treat it as a ranking problem and use common ranking metrics like precision, recall, NDCG, etc.
+\end{itemize}
+\subsection{Challenges}
+\begin{itemize}
+    \item Cold start (what items to recommend to new users?)
+    \item dynamic vs static preferences // long vs short term preferences (preferences change over time but this is more difficult to model)
+    \item exploration vs exploitation (recommend to understand preferences? recommend based on history?)
+\end{itemize}
+\subsection{Content-based recommenders}
+\begin{itemize}
+    \item main idea: recommend items to user $u$ such that they are similar to previous items $\mathcal{I}_u$ rated highly by $u$
+    \item for each item, create profile vector $x_i$ containing features (e.g. author, title, actors; for text: set of important words); important features are picked from usual heuristics e.g. tf-idf
+    \item build user profile as weighted sum of rated item profiles:
+    $$x_u = \sum_{i \in \mathcal{I}_u} r_{ui}x_i$$
+    \\ different variants: normalize weights using average rating of user or use more sophisticated aggregations
+    \item suggest items whose feature vector $x_i$ is most similar to profile vector $x_u$ (e.g. cosine similarity)
+    \item Advantages:
+    \begin{itemize}
+        \item user independence - does not need information about user
+        \item can handle unique tastes
+        \item unpopular items are also recommended
+        \item transparency - explanations are straightforward
+        \item cold start for items is not an issue
+    \end{itemize}
+    \item Disadvantages:
+    \begin{itemize}
+        \item feature engineering / domain knowledge often needed
+        \item overspecialization (no serendipitous recommendations (unexpected items))
+        \item cold start for users
+    \end{itemize}
+\end{itemize}
+\subsection{Collaborative filtering}
+\begin{itemize}
+    \item not only consider user $u$ but also use ratings of other users (collaborative)
+    \item Key idea: if user $u$ and $v$ have rated items similarly, and user $v$ has rated an item, user $u$ will rate the item similarly
+    \item content of items is no longer needed
+\end{itemize}
+\subsubsection{Different dimensions/approaches to CF:}
+\begin{itemize}
+    \item Methodology: neighborhood / model-based
+    \begin{itemize}
+        \item neighborhood-base: use stored ratings directly (nearest neighbours)
+        \item model-based: learn predictive model and mode user-item interactions -> predict new/incomplete ratings
+    \end{itemize}
+    \item what is being recommended: user-based / item-based
+    \begin{itemize}
+        \item user-based: use other users to infer ratings of an item for a user (neighbours = users who have similar ratings)
+        \item item-based: use ratings of similar items that a user has rated to predict rating for given 
+    \end{itemize}
+    \item type of ratings: implicit /explicit
+    \begin{itemize}
+        \item explicit: like / dislike / rating (might not be available)
+        \item implicit: time spent, clicks (available but intention unclear)
+    \end{itemize}
+\end{itemize}
+\subsubsection{Neighborhood-based recommendation}
+\begin{itemize}
+    \item Explicit ratings, sparse (each user represented as rating vector with dimensions = items)
+    \item consider k-nearest neighbors of $u$ who rated item $i$: $\mathcal{N}_i(u)$:
+    $$r_{ui} = \dfrac{1}{|\mathcal{N}_i(u)|} \sum_{v \in \mathcal{N}_i(u)}r_{vi}$$
+    \item could also consider that some users are more similar to user $u$ and use the similarity score between users $w_{uv}$ (use cosine similarity, pearson correlation etc.):
+    $$ r_{ui} = \dfrac{\sum_{v \in \mathcal{N}_i(u)}w_{uv}r_{vi}}{\sum_{v \in \mathcal{N}_i(u)} |w_{uv}|}$$
+    \item Problems:
+    \begin{itemize}
+        \item a rating of 5 might have different value for different users -> normalize rating per user
+        \item limited coverage: users can be neighbors only if they rated common items
+        \item rating vectors are very sparse
+    \end{itemize}
+\end{itemize}
+\textbf{Use matrix factorization to solve sparsity problem:}
+\begin{itemize}
+    \item project user/item vectors to dense latent space by either decomposing rating or similarity matrix
+    \item given $|\mathcal{U}| \times |\mathcal{I}|$-matrix $R$ of rank $n$, approximate it by $hat{R}=PQ^T$ of rank $k<n$, where $P$ is a $|\mathcal{U}| \times k$ matrix of users and $Q$ is a $|\mathcal{I}| \times k$ matrix of items:
+    $$ err(P,Q) = ||R - PQ^T||^2_F = \sum_{u,i} (r_{ui} - p_uq_i^T)^2 $$
+    \item use SVD of $R = U \Sigma V^T$ where $U_{|\mathcal{U}| \times n}, V_{|\mathcal{I}| \times n}, \Sigma_{n \times n}$ and use low-rank approximation with parameter $k$ such that $P = U_k \Sigma_k^{1/2}$ and $Q = V_k \Sigma_k^{1/2}$ and $r_{ui} = p_u q_i^T$
+\end{itemize}
+\textbf{Advantages}
+\begin{itemize}
+    \item no feature engineering needed
+    \item does not rely on content (which might be inaccurate)
+    \item can handle overspecialization/diversity problems
+    \item items recommended may not have similar content
+\end{itemize}
+\textbf{Disadvantages}
+\begin{itemize}
+    \item neighborhood-based: limited coverage / sparsity
+    \item cold start
+    \item popularity bias: popular items are more often recommended
+    \item cannot recommend to users with unique taste (content-based methods can!)
+\end{itemize}
+\subsection{Deep recommenders}
+\begin{itemize}
+    \item scalable and can learn complex interactions
+    \item reproducability crisis: are often not reproducable
+    \item typical to use implicit feedback
+\end{itemize}
+\subsubsection{MultVAE}
+\begin{itemize}
+    \item VAE for collaborative filtering
+    \item users are represented as binary vectors (interaction with item (does not) exist)
+    \item regular VAE loss -> reconstruct input vector and use isotropic gaussian as prior
+    \item At inference: encode user history and decode latent representation -> after dropping all items with which the user already interacted, select item with highest output score
+    \item Advantages
+    \begin{itemize}
+        \item All advantages that come from DL: powerful flexible, scalable etc.
+        \item cross-pollination, adoption of advances from ML/DL
+    \end{itemize}
+    \item Disadvantages
+    \begin{itemize}
+        \item cold start
+        \item no consensus if performance gains are significant
+        \item reproducability
+        \item deep models might not be needed
+    \end{itemize}
+\end{itemize}
+\subsection{Other Approaches}
+\subsubsection{Sequential Recommendation}
+\begin{itemize}
+    \item interests can change over time, so look into short-term vs long-term
+    \item could predict next item and also next basket (in online shopping)
+\end{itemize}
+\subsubsection{Exploration vs Exploitation}
+\begin{itemize}
+    \item exploitation: recomment only items that are likely to interest user (what about new user?)
+    \item exploration: recommend other items (learn user's preferences over un-encountered items; could harm user experience)
+\end{itemize}
+\subsubsection{Conversational Recommendation}
+\begin{itemize}
+    \item tackles cold start, dynamic preferences
+    \item if unsure about attribute/item, ask!
+\end{itemize}

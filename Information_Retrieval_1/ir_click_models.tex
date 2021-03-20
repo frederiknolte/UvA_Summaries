@@ -65,3 +65,44 @@
 	\item \textit{Advantages}: Clicking on a document depends on previous decisions/documents
 	\item \textit{Disadvantages}: No skips are allowed. Also, the cascade model only considers a single click $\implies$ Dynamic Bayesian Networks
 \end{itemize}
+\subsection{Estimation in Click models}
+\begin{itemize}
+	\item Cascade-based models only have one type of parameter ($\alpha$) that do not depend on one another $\rightarrow$ use maximum likelihood
+	\item In position-based models we cannot estimate examination and attractiveness separately $\rightarrow$ use EM algorithm
+	\begin{itemize}
+		\item Estimate $\alpha_{uq}$ by using a click-log for a query-document pair $\mathcal{S}_{qd}$:
+		$$ \alpha_{uq}^{(t+1)} = \dfrac{1}{|\mathcal{S}_{qd}|} \sum_{s \in \mathcal{S}_{qd}} \Big( c_d^{(s)} + (1 - c_d^{(s)}) \dfrac{(1- \gamma_r^{(t)}) \alpha_{qd}^{(t)}}{1 - \gamma_r^{(t)} \alpha_{qd}^{(t)}} \Big) $$
+		\item Estimate $\gamma_r$ also by using a click-log $\mathcal{S}$:
+		$$ \gamma_{r}^{(t+1)} = \dfrac{1}{|\mathcal{S}|} \sum_{s \in \mathcal{S}} \Big( c_d^{(s)} + (1 - c_d^{(s)}) \dfrac{\gamma_r^{(t)} (1 - \alpha_{qd}^{(t)})}{1 - \gamma_r^{(t)} \alpha_{qd}^{(t)}} \Big) $$
+	\end{itemize}
+\end{itemize}
+\subsection{Applications of click models}
+\begin{itemize}
+	\item Full click probabilities (i.e. probability of a click, no matter what) can inform model-based metrics (e.g. Rank-based precision and expected reciprocal rank)
+	\begin{itemize}
+		\item Utility-based metrics: $\mathrm{uMetric} = \sum_{r=1}^n P(C_r = 1) \cdot U_r$
+		\item Effort-based metrics (how much effort it takes to examine/perceive document at position): $\mathrm{eMetric} = \sum_{r=1}^n P(S_r = 1) \cdot F_r$ ($P(S_r = 1)$ is probability of success/satisfaction)
+		\item From reciprocal rank $RR = \dfrac{1}{r}$, where $S_r =1$ we get expected reciprocal rank $ERR = \sum_r \dfrac{1}{r} \cdot P(S_r =1)$
+		\begin{itemize}
+			\item Can be estimated using:
+			\begin{align*}
+				P(A_r = 1) &= \alpha_{qd_r} \\
+				P(E_1 = 1 ) &= 1 \\
+				P(E_r =1 | S_{r-1} = 1) &= 0 \\
+				P(E_r =1 | S_{r-1} = 0) &= \gamma \\
+				P(S_r = 1 | C_r = 0) &= 0 \\
+				P(S_r = 1 | C_r = 1) &= \sigma_{qd_r}
+			\end{align*}
+			\item then:
+			\begin{align*}
+				P(S_r=1) &= P(S_r = 1 | C_r = 1) \cdot P(C_r = 1) \\
+				&= \sigma_{qd_r} \cdot \alpha_{qd_r} \cdot \prod_{i=1}^{r-1} (\gamma \cdot (1 - \sigma_{qd_i} \cdot \alpha_{qd_i})) \\
+				&= R_{qd_r} \cdot \prod_{i=1}^{r-1} (\gamma \cdot (1 - R_{qd_i}))
+			\end{align*}
+			\item putting into ERR:
+			$$ ERR = \sum_r \dfrac{1}{r} \cdot R_{qd_r} \cdot \prod_{i=1}^{r-1} (\gamma \cdot (1 - R_{qd_i})) $$
+		\end{itemize}
+	\end{itemize}
+	\item Conditional click probabilities (i.e. probability of click given previous clicks) can be used to simulate users/clicks (go to position 1, get click probability and examine/go to next document)
+	\item Click models also give parameter values ($\alpha$ and $\gamma$) which are unbiased and can be used for (learning to) ranking
+\end{itemize}

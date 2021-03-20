@@ -2,10 +2,36 @@
 \begin{itemize}
 	\item Mathematical framework for defining query-document matching
 \end{itemize}
+\subsection{Query Analysis}
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.5\textwidth]{figures/query_analysis_pipeline.png}
+	\label{img:query_analysis_pipeline}
+\end{figure}
+Query analysis pipeline is given in Fig. \ref{img:query_analysis_pipeline}.
+\subsection{Query Processing}
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.5\textwidth]{figures/query_processing.png}
+	\label{img:query_processing}
+\end{figure}
+\begin{itemize}
+	\item Process depicted in Fig. \ref{img:query_processing}
+	\item Matching: select documents that have something to do with query
+	\item Simple ranking: retrieve first ranking for a large number of documents
+	\item Complex ranking: re-rank only top-k documents from simple ranking (simple ranking is fast and cheap whereas complex ranking is slow and expensive)
+\end{itemize}
+How to select documents?
+\begin{itemize}
+	\item Term-at-a-time: preprocess terms -> for each term, go through inverted list of documents (and weights) -> add weights of corresponding documents across terms (advantages: only one list at a time to process, disadvantages: store complete list of weights in memory)
+	\item Process all inverted lists at the same time -> like merge sort where you keep pointers in each list and have those pointers at the same document ids all the time (note that inverted lists have to be ordered)
+	\item In practice: for websearch select documents where ALL query terms appear in documents; in cases where you want to retrieve many possible matches, select documents where at least one term from query appear (e.g. medical search)
+	\item A document score is usually computed as linear combination of query-dependent and query-independent scores
+\end{itemize}
 \subsection{TF-IDF}
 \begin{itemize}
 	\item In a vector space model, documents and queries are represented in vector space
-	\item Axes are mostly terms/vocabulary so that a document or query is represented by terms they contain (or their frequency)
+	\item Axes are mostly terms/vocabulary so that a document or query is represented by terms they contain (binary) or their frequency
 	\item We can rank documents based on their cosine similarity with the query:
 	$$\text{score}(d,q) = \frac{\vec{q} \cdot \vec{d}}{||\vec{q}||\cdot ||\vec{d}||}$$
 	\item Documents can be therefore represented as non-negative vector of term weights (raw frequency in doc):
@@ -42,54 +68,30 @@
 \begin{itemize}
 	\item Statistical language models are a probability distribution over word sequences $P(w_1, ..., w_m)$ with which documents and queries can be represented (and uncertainty quantified)
 	\item Thus, a language model describes the probability of e.g. $q$ being the given word sequence
-	\item Documents are ranked given a query by its similarity. Therefore we can use either document likelihood, query likelihood or KL-divergence
+	\item Documents are ranked given a query. We can use either document likelihood, query likelihood or KL-divergence
 \end{itemize}
 \subsubsection{Query likelihood}
 \begin{itemize}
 	\item Given a document, what queries are most likely to be created for it? 
-	\item We first have to ensure that the query likelihood correlates with document likelihood. Therefore, we apply the Bayes rule: $p(d|q) = \frac{p(q|d)p(d)}{p(q)}$. As $p(q)$ is equal for all documents, and we assume a uniform prior for all documents (though not always the case), we retrieve $p(d|q)\propto p(q|d)$
+	\item We first have to ensure that the query likelihood correlates with document likelihood. Therefore, we apply the Bayes rule: $p(d|q) = \frac{p(q|d)p(d)}{p(q)}$. As $p(q)$ is equal for all documents, and we assume a uniform prior for all documents (though not always the case), we retrieve $p(d|q)\propto p(q|d) = \prod_{t \in q} p(t|d) = \prod_{t \in q} \dfrac{tf(t,d)}{dl(d)}$
 	\item Thus, by generating a probability distribution of possible queries for a document, we can approximate how likely a document is given a query.
 	\item The scoring function is defined as follows:
 	$$\text{score}(d,q) = \log \left[p(q|\theta_d)\cdot p(d)\right]$$
-	where $\theta_d$ describes the document. There are mainly three modeling choices:
-	\begin{enumerate}
-		\item \textit{How to define the generative process $p|\theta_d$?}
-		\begin{itemize}
-			\item Given $\theta_d$, what is the generative process for getting $q=w_1,...,w_{|q|}$?
-			\item Different distributions are possible
-			\item \textit{Multiple Bernoulli} - bag of word perspective, every word in vocabulary has probability to be in query or not. The related probability is:
-			$$p(q|\theta_d) = \prod\limits_{w_i \in q} p(X_i = 1 | \theta_d) \prod\limits_{w_i \not\in q} \left(1 - p\left(X_i = 1 | \theta_d\right) \right)$$
-			\item \textit{Multinomial} - similar to bernoulli, but we know have a random variable for every word slot in the query and not one for every word in the vocabulary. Thus, the calculation is:
-			$$p(q|\theta_d) = \prod\limits_{w_i \in q} p(w_i | \theta_d) \text{\hspace{4mm}where\hspace{4mm}} \sum\limits_{w_i \in V} p(w_i|\theta_d) = 1$$
-			\item \textit{Multiple Poisson} - similar to bernoulli, but instead of presence or absence, we model the number of times we expect a word from the vocabulary to occur in the query of length $|q|$ by a Poisson distribution:
-			$$p(q|\theta_d) = \prod\limits_{w_i \in V} \frac{e^{-\lambda_i |q|} (\lambda_i |q|)^{\text{tf}(w_i;d)}}{\text{tf}(w_i;d)!}$$
-		\end{itemize}
-		\item \textit{How to estimate $\theta_d$ based on document $d$?}
-		\begin{itemize}
-			\item To estimate $\theta_d$ we perform MLE: $\hat{\theta}_d = \arg \max_{\theta_d} p(d|\theta_d)$
-			\item In case of a multinomial distribution, we would get:
-			$$p(d|\theta_d) = \prod\limits_{w_i \in V} p(w_i | \theta_d)^{\text{tf}(w_i;d)} \implies \log p(d|\theta_d) = \sum\limits_{w_i \in V} \text{tf}(w_i;d) \log p(w_i | \theta_d)$$
-			\item Note that this is a constrained optimization problem with $\sum\limits_{w_i \in V} p(w_i|\theta_d) = 1$.
-			\item By using lagrangian multiplier, we get $p_{MLE}(w_i|d) = \frac{\text{tf}(w_i;d)}{|d|}$
-		\end{itemize}
-		\item \textit{How to compute prior $p(d)$?}
-		\begin{itemize}
-			\item The prior takes everything into account which is independent of a query.
-			\item This can include number of clicks, credibility, ...
-		\end{itemize}
-	\end{enumerate}
+	where $\theta_d$ describes the document.
 \end{itemize}
+\subsubsection{KL-Divergence}
+$$ KL(\theta_d || \theta_q) = \sum_{t \in V} p(t|\theta_q) \log \dfrac{p(t|\theta_q)}{p(t|\theta_d)} $$
 \subsubsection{Smoothing}
 \begin{itemize}
 	\item How to deal with unseen words which have a probability of 0.
-	\item First, we assume a multinomial distribution again with the optimal parameters of $p(w_i|\theta_d) = \frac{\text{tf}(w_i;d)}{|d|}$
+	\item First, we assume a multinomial distribution again with the optimal parameters of $p(t|\theta_d) = \frac{\text{tf}(t,d)}{dl(d)}$
 	\item \textbf{Adaptive smoothing}: add a small extra count to every word:
-	$$p(w_i|\theta_d) = \frac{\text{tf}(w_i;d) + \epsilon}{|d| + \epsilon |V|}$$
+	$$p(t|\theta_d) = \frac{\text{tf}(t,d) + \epsilon}{dl(d) + \epsilon |V|}$$
 	In case of $\epsilon=0$, we fall back to ML estimation. $\epsilon=1$ is called Laplace smoothing.
 	\item \textbf{Jelinek-Mercer smoothing}: linearly interpolate with "background" knowledge so that rare words also have smaller additives:
-	$$p_{\lambda}(w_i|\theta_d) = \lambda \frac{\text{tf}(w_i;d)}{|d|} + (1 - \lambda) \frac{\text{tf}(w_i;C)}{|C|}$$
-	The context $C$ is approximated by the concatenation of all documents.
-	\item \textbf{Dirichlet prior smoothing}: we assume that before seeing the document, we have a prior belief over all words $p(\theta_d)$. We use the posterior which gets narrower the more words we see and therefore the more certain we are about the document distribution.
+	$$p_{\lambda}(t|\theta_d) = \lambda \frac{\text{tf}(t,d)}{dl(d)} + (1 - \lambda) \frac{\text{cf}(t)}{|C|}$$
+	where $C$ is the whole collection and $cf$ is the collection frequency.
+	\item \textbf{Dirichlet prior smoothing}: we assume that before seeing the document, we have a prior belief over all words in it $p(\theta_d)$. We use the posterior which gets narrower the more words we see and therefore the more certain we are about the document distribution.
 	\begin{itemize}
 		\item Maximum A Posteriori estimate by $\hat{\theta}_d = \arg\max_{\theta_d} p(\theta_d|d) = \arg\max_{\theta_d} p(d|\theta_d) p(\theta_d)$
 		\item Prior distribution $p_i\sim \text{Dir}(\alpha) \implies p(\theta_d) = \prod\limits_{w \in V} p(w|\theta_d)^{\alpha_w - 1}$

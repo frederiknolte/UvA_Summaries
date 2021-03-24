@@ -1,8 +1,21 @@
 \section{Online evaluation}
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.6\textwidth]{figures/online_evaluation.png}
+	\caption{Schema of Online Evaluation}
+	\label{img:online_eval}
+\end{figure}
 \begin{itemize}
-	\item In online evaluation, the system interacts with the user $\implies$ user "tells" what is relevant, system analyzes the user's behavior for gaining that knowledge
-	\item The benefit of online evaluations is that they are mostly simpler and directly incorporate measuring the ranking quality
+	\item In online evaluation, the system interacts with the user $\implies$ user "tells" what is relevant (through interactions), system analyzes the user's behavior for gaining knowledge about preferences/relevances
+	\item The benefit of online evaluations is that they are mostly simpler and more efficient (as they have control over what data is collected) and directly incorporate measuring the ranking quality
+	\item online evaluation systems have control over what to display to user
 	\item However, the downsides are that the results are worse to explain/interpret (why did users click less, different queries might rely on different metrics, ...). Also, evaluations might not be comparable over time so that we also need to ensure the same conditions/user population for both systems.
+	\item An schematic figure is given in Fig. \ref{img:online_eval}
+	\item An online evaluation algorithm should
+	\begin{itemize}
+		\item give reliable and correct results (robust to noise, handle biases)
+		\item provide good user experience
+	\end{itemize} 
 \end{itemize}
 \subsection{Analyzing user behavior}
 \begin{itemize}
@@ -25,11 +38,19 @@
 \begin{itemize}
 	\item When testing two systems in an online experiment, we need to make sure that both have the same preconditions so that the system improvements clearly correlate with the new click/sale numbers
 	\item In A/B Testing, users are split into two groups where each group is assigned to one of the algorithms. We analyze the users' behavior on both systems and calculate a metric based on that. Comparing the results for both systems on significance leads to a final decision.
+	\item \textbf{Advantages}
+	\begin{itemize}
+		\item straightforward and common
+		\item can test many different aspects
+	\end{itemize}
 	\item \textit{Challenges} in A/B Testing
 	\begin{itemize}
 		\item If one system is very different and probably bad, it will affect the \textit{user experience} and damages website image $\implies$ perform offline evaluation in advance to avoid testing a very bad system
 		\item It is hard to define \textit{metrics} as they can contradict each other. For example, if we report number of clicks and sessions per users, a click increase can indicate better/more relevant results. However, if another systems provides snippets that already contain the information, the user will click less.
 		\item The metric should be as sensitive as possible. \textit{Sensitivity} is the ability of the metric to detect the statistically significant difference when the treatment effect exists $\implies$ how many queries/days/users/... for significance needed?
+		\item they are inefficient and require lots of data
+		\item tests have to run for a long time
+		\item need to identify individual users
 	\end{itemize}
 
 	\begin{figure}[ht]
@@ -61,40 +82,84 @@
 \subsubsection{Team-draft interleaving}
 \begin{itemize}
 	\item In team-draft interleaving we guarantee that both algorithms contribute equally to the interleaved ranking
-	\item At each stage, we flip a coin to determine whether to pick the next document from A or B first. Afterwards, the document of the other system is picked
-	\item If a document is already in the interleaved ranking, we look for the next document from the \textit{same} ranking model until we find a new document.
-	\begin{figure}[ht]
+	\item Process:
+	\begin{enumerate}
+		\item Until $k$ documents are placed:
+		\begin{enumerate}
+			\item randomly choose ranker A or B
+			\item let chosen ranker place its next unplaced document
+			\item let other ranker place its next unplaced document
+			\item remember which ranker placed which document
+		\end{enumerate}
+		\item present interleaving to user, observe clicks
+		\item ranker with most clicks on its placed documents wins
+	\end{enumerate}
+	\item Team-draft interleaving finds no preference under random clicks (e.g. 50\% chance that second document is clicked $\rightarrow$ equal for both A and B as they are equally likely to place second document)
+	\item Properties of team-draft interleaving: 
+	\begin{itemize}
+		\item more efficient than A/B testing (needs less samples)
+		\item user experience hardly effectly (not worse than worst ranker)
+		\item correctness: ranker that placed clicked documents higher \textit{usually} wins
+	\end{itemize}
+	\item Problematic case for team-draft interleaving (document 3 being the only relevant document) in Fig. \ref{img:team_draft_interleaving_problem}
+	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.5\textwidth]{figures/online_eval_team_draft_interleaving.png}
-		\caption{Formal algorithm describing Team-draft interleaving}
-		\label{img:online_eval_team_draft_interleaving}
+		\includegraphics[width=0.6\textwidth]{figures/team_draft_interleaving_problem.png}
+		\caption{Edge Case of Team-Draft Interleaving}
+		\label{img:team_draft_interleaving_problem}
 	\end{figure}
-	\item There are also corner cases that can cause troubles in team-draft interleaving. However, in practice this rarely happens/has a significant effect. 
 \end{itemize}
 \subsubsection{Probabilistic interleaving}
 \begin{itemize}
 	\item To avoid biases completely, we can apply probabilistic models
-	\item Convert the ranking of each model to a probability distribution by applying softmax ($\tau = 3$):
-	$$p_i(d) = \frac{\frac{1}{r_i(d)^{\tau}}}{\sum_{d' \in D} \frac{1}{r_i(d')^{\tau}}}$$
-	\item For every position in the interleaved ranking, flip a coin to determine whether to pick a document from A or B. Next, we sample from the corresponding softmax distribution a document without replacement, and add it to the interleaved list. The picked document is removed from the probability distributions of A and B. 
-	\item We can perform evaluation by counting the clicks for documents sampled from A and B. We expect the same number of clicks for documents at the same position of both algorithms due to the same probability in the softmax. % both A and B based on the softmax, and compare which one has the higher probability sum of all clicked documents. Thus, for documents at the same rank, we expect a tie.
-	\item Note that compared to a hard assignment of 0 or 1 in balanced and team draft interleaving, the distribution of credit accumulated for clicks is smoothed based on the relative rank of the document in the original result lists (a click on any document leads to a non-zero credit for both rankings)
-	\item The algorithm is summarized in Figure~\ref{img:online_eval_probabilistic_interleaving}
-	\begin{figure}[ht]
-		\centering
-		\includegraphics[width=0.5\textwidth]{figures/online_eval_probabilistic_interleaving.png}
-		\caption{Formal algorithm describing probabilistic interleaving}
-		\label{img:online_eval_probabilistic_interleaving}
-	\end{figure}
-	\item Another, more efficient evaluation method is by marginalizing over all possible assignments $a$. Therefore, we calculate the probability of the interleaved list $l$ given $a$ (and the query $q$) by successively multiplying the softmax probabilities at that point. For example, the first assignment $a=\left\{1,1,1,1\right\}$ leads to the following calculation:
-	$$p(l_i|a=\left\{1,1,1,1\right\},q) = 0.85 \cdot \frac{0.1}{0.15} \cdot \frac{0.03}{0.05} \cdot \frac{0.02}{0.02} = 0.34$$
-	\item Normalizing all $p(l_i|a,q)$ by its sum lead to $p(a|l_i,q)$ $\implies$ $p(a|l_i,q) = \frac{p(l_i|a,q)}{\sum_{a \in A} p(l_i|a,q)}$
-	\item For every assignment, we add the value $o=-1$ times the probability $p(a|l_i,q)$ if more clicked documents were assigned to $A$. If $B$ has more clicks, we use $o=1$ as factor, and ignore it for a tie (or multiply by $o=0$). Thus, our expected number of wins $B$ has more than $A$ is given by:
-	$$E[O] = \sum_{a \in A} o_a \cdot p(a|l_i,q) \text{\hspace{2mm}where\hspace{2mm}} o_a = \begin{cases}
-	 -1 & \text{if } c_A > c_B\\
-	 0 & \text{if } c_A = c_B\\
-	 1 & \text{if } c_A < c_B
-	\end{cases}$$
+	\item Convert the ranking of each model to a probability distribution by applying softmax ($\tau \in \mathbb{R}^+$) for ranker $R_A$:
+	$$P(d|D,R_A) = \frac{\frac{1}{rank(d,R_A)^{\tau}}}{\sum_{d' \in D} \frac{1}{rank(d',R_A)^{\tau}}}$$
+	\item Process:
+	\begin{enumerate}
+		\item compute $P_A$ and $P_B$ from ranker A and B
+		\item repeat until $k$ documents placed:
+		\begin{enumerate}
+			\item randomly choose $P_A$ or $P_B$ and sample document $d$
+			\item place $d$ and remember which ranker placed it
+			\item renormalize $P_A$ \textit{and} $P_B$ after removing $d$
+		\end{enumerate}
+		\item display to user and observe clicks
+		\item ranker with the most clicked documents wins
+	\end{enumerate}
+	\item We expect the same number of clicks for documents at the same position of both algorithms due to the same probability in the softmax.
+	\item Does this method have fidelity?
+	\begin{itemize}
+		\item no ranker has advantage due to factors other than relevance as every ranker is equally likely to place at every rank
+		\item unambiguous winner will always win in expectation as every ranker is equally likely to place at every rank $\rightarrow$ dominating ranker is more likely to place relevant documents at each rank $\rightarrow$ if relevant documents are more likely to be clicked, dominating ranker wins in expectation
+	\end{itemize}
+\end{itemize}
+\textbf{Probabilistic Interleaving with expected outcome}
+\begin{itemize}
+	\item Another, more efficient evaluation method is by marginalizing over all possible assignments. instead of using the outcome based on the ranker assignments, we calculate expected outcome over all possible ranker assignments
+	\item let outcome of comparison be $O(R_A,R_B,L,T,c) \in \{-1,0,1\}$ where $L$ is the interleaved list, assignments $T$, clicks $c$
+	\item since clicks are independent of assignment $T$, we can marginalize:
+	$$ \mathbb{E}[O(R_A,R_B,L,c)] = \sum_T P(T|R_A,R_B,L)O(R_A,R_B,L,T,c)$$
+	\item the placement probability is therefore:
+	\begin{align*}
+		&P(T_i=A) = 0.5 \\
+		&P(L_i = d|T_i = A) = P_A(d) = \dfrac{\dfrac{1}{rank(d,R_A)^\tau}}{\sum_{d' \in D} \dfrac{1}{rank(d',R_A)^\tau}} \\
+		&P(T_i = A|L_i=d) = \dfrac{P_A(d)}{P_A(d) + P_B(d)}
+	\end{align*}
+	\item using that the outcome of a comparison is only dependent on the clicked documents and the assignment of a document does not depend on other assignments, we only have to consider the possible assignments of the \textit{clicked} documents (bringing complexity from $2^k$ to $2^c$)
+	\item Process:
+	\begin{enumerate}
+		\item compute $P_A$ and $P_B$ from ranker A and B
+		\item repeat until $k$ documents placed:
+		\begin{enumerate}
+			\item randomly choose $P_A$ or $P_B$ and sample document $d$
+			\item place $d$ without remembering which ranker placed it
+			\item renormalize $P_A$ \textit{and} $P_B$ after removing $d$
+		\end{enumerate}
+		\item display to user and observe clicks
+		\item calculate expected outcome by marginalizing over all possible placements
+		\item expected winner wins competition
+	\end{enumerate} 
+	\item Note that compared to a hard assignment of 0 or 1 in balanced and team draft interleaving, the credit accumulated for clicks is smoothed based on the relative rank of the document in the original result lists (a click on any document leads to a non-zero credit for both rankings)
 	\item Figure~\ref{img:online_eval_probabilistic_interleaving_2} visualizes an example for probabilistic interleaving
 	\begin{figure}[ht]
 		\centering
@@ -102,4 +167,45 @@
 		\caption{Visualization of probabilistic interleaving}
 		\label{img:online_eval_probabilistic_interleaving_2}
 	\end{figure}
+\end{itemize}
+\textbf{Properties of probabilistic interleaving}
+\begin{itemize}
+	\item correctness: 
+	\begin{itemize}
+		\item correct outcomes guaranteed w.r.t. fidelity
+		\item marginalization does not affect expected outcomes
+	\end{itemize}
+	\item User experience:
+	\begin{itemize}
+		\item not guaranteed
+		\item every possible ranking can be displayed, albeit with different probabilities
+	\end{itemize}
+\end{itemize}
+\subsubsection{Optimized interleaving}
+\begin{itemize}
+	\item look at allowed interleavings: produce rankings by always looking at the top documents, not yet placed $\rightarrow$ never have a document, where both rankers agree that another document should come first
+	\item can use different scoring functions (there are requirements). A click on a document gives a preference score determined how document is ranked:
+	\begin{itemize}
+		\item Linear Rank Difference:
+		$$s(d,R_A,R_B) = \delta_d = rank(d,R_A) - rank(d, R_B)$$
+		\item Inverse Rank Difference:
+		$$s(d,R_A,R_B) = \delta_d = \dfrac{1}{rank(d,R_A)} - \dfrac{1}{rank(d, R_B)}$$
+	\end{itemize}
+	\item This gives us Fig \ref{img:optimized_interleaving}
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=\textwidth]{figures/optimized_interleaving.png}
+		\caption{Optimized Interleaving}
+		\label{img:optimized_interleaving}
+	\end{figure}
+	where, if the probability $p_L$ of interleaving $L$ being displayed, the expected outcome can be written as:
+	$$\mathbb{E}[O] = \sum_{L \in \mathcal{L}} \Big( p_L \sum_{i=1}^{|L|} P(click(i))s(L_i,R_A,R_B) \Big) = 0$$
+	which becomes a linear optimization task to find $p_L$
+	\item We used randomization to check that under randomized clicks there is no winner
+	\item Properties of optimized interleaving:
+	\begin{itemize}
+		\item user experience: strongest guarantees of all interleaving methods
+		\item correctness: method has fidelity (if optimized for it) as long as linear optimization is successful (it has been proven by brute force that there always is a solution for top-10 rankings)
+		\item can be correct under other definitions as well
+	\end{itemize}
 \end{itemize}

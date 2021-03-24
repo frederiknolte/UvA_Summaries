@@ -6,6 +6,7 @@
 \begin{figure}[h!]
 	\centering
 	\includegraphics[width=0.5\textwidth]{figures/query_analysis_pipeline.png}
+	\caption{Query analysis pipeline}
 	\label{img:query_analysis_pipeline}
 \end{figure}
 Query analysis pipeline is given in Fig. \ref{img:query_analysis_pipeline}.
@@ -13,6 +14,7 @@ Query analysis pipeline is given in Fig. \ref{img:query_analysis_pipeline}.
 \begin{figure}[h!]
 	\centering
 	\includegraphics[width=0.5\textwidth]{figures/query_processing.png}
+	\caption{Query processing}
 	\label{img:query_processing}
 \end{figure}
 \begin{itemize}
@@ -23,8 +25,8 @@ Query analysis pipeline is given in Fig. \ref{img:query_analysis_pipeline}.
 \end{itemize}
 How to select documents?
 \begin{itemize}
-	\item Term-at-a-time: preprocess terms -> for each term, go through inverted list of documents (and weights) -> add weights of corresponding documents across terms (advantages: only one list at a time to process, disadvantages: store complete list of weights in memory)
-	\item Process all inverted lists at the same time -> like merge sort where you keep pointers in each list and have those pointers at the same document ids all the time (note that inverted lists have to be ordered)
+	\item Term-at-a-time: preprocess terms $\rightarrow$ for each term, go through inverted list of documents (and weights) $\rightarrow$ add weights of corresponding documents across terms (advantages: only one list at a time to process, disadvantages: store complete list of weights in memory)
+	\item Process all inverted lists at the same time $\rightarrow$ like merge sort where you keep pointers in each list and have those pointers at the same document ids all the time (note that inverted lists have to be ordered)
 	\item In practice: for websearch select documents where ALL query terms appear in documents; in cases where you want to retrieve many possible matches, select documents where at least one term from query appear (e.g. medical search)
 	\item A document score is usually computed as linear combination of query-dependent and query-independent scores
 \end{itemize}
@@ -63,6 +65,14 @@ How to select documents?
 	$$\text{BM25} = \sum\limits_{\text{unique\hspace{1mm}} t\in q} \frac{(k_1 + 1) \cdot \text{tf}(d;t)}{k_1 \cdot ((1-b) + b\cdot (l_d / l_{avg}))+ \text{tf}(d;t)} \cdot \frac{(k_3 + 1)\cdot \text{tf}(q;t)}{k_3 + \text{tf}(q;t)} \cdot \text{idf}(t)$$
 	\item Parameters $k_1$, $b$ and $k_3$ are tuned. Common defaults are $k_1 = 1.5$ and $b=0.75$
 	\item It is the most widely used ranking in IR but only loosely inspired by probabilistic models
+	\item Parameters:
+	\begin{itemize}
+		\item $k_1 \rightarrow 0 \Rightarrow$ Sum of idf
+		\item $k_1 \rightarrow \infty \Rightarrow$ Sum of tf-idf
+		\item b is parameter controlling the document length, if $b=0 \Rightarrow$ no normalization by document length $\Rightarrow$ not fair against short documents
+		\item if $tf \rightarrow \infty \Rightarrow$ reduces to sum of idf with constant multiplication ($k_1 + 1$)
+		\item long queries: cancel out with large term frequency in query
+	\end{itemize}
 \end{itemize}
 \subsection{Statistical Language Models}
 \begin{itemize}

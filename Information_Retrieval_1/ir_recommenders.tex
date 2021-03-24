@@ -44,7 +44,7 @@
     \item Methodology: neighborhood / model-based
     \begin{itemize}
         \item neighborhood-base: use stored ratings directly (nearest neighbours)
-        \item model-based: learn predictive model and mode user-item interactions -> predict new/incomplete ratings
+        \item model-based: learn predictive model and mode user-item interactions $\rightarrow$ predict new/incomplete ratings
     \end{itemize}
     \item what is being recommended: user-based / item-based
     \begin{itemize}
@@ -66,7 +66,7 @@
     $$ r_{ui} = \dfrac{\sum_{v \in \mathcal{N}_i(u)}w_{uv}r_{vi}}{\sum_{v \in \mathcal{N}_i(u)} |w_{uv}|}$$
     \item Problems:
     \begin{itemize}
-        \item a rating of 5 might have different value for different users -> normalize rating per user
+        \item a rating of 5 might have different value for different users $\rightarrow$ normalize rating per user
         \item limited coverage: users can be neighbors only if they rated common items
         \item rating vectors are very sparse
     \end{itemize}
@@ -74,7 +74,7 @@
 \textbf{Use matrix factorization to solve sparsity problem:}
 \begin{itemize}
     \item project user/item vectors to dense latent space by either decomposing rating or similarity matrix
-    \item given $|\mathcal{U}| \times |\mathcal{I}|$-matrix $R$ of rank $n$, approximate it by $hat{R}=PQ^T$ of rank $k<n$, where $P$ is a $|\mathcal{U}| \times k$ matrix of users and $Q$ is a $|\mathcal{I}| \times k$ matrix of items:
+    \item given $|\mathcal{U}| \times |\mathcal{I}|$-matrix $R$ of rank $n$, approximate it by $\hat{R}=PQ^T$ of rank $k<n$, where $P$ is a $|\mathcal{U}| \times k$ matrix of users and $Q$ is a $|\mathcal{I}| \times k$ matrix of items:
     $$ err(P,Q) = ||R - PQ^T||^2_F = \sum_{u,i} (r_{ui} - p_uq_i^T)^2 $$
     \item use SVD of $R = U \Sigma V^T$ where $U_{|\mathcal{U}| \times n}, V_{|\mathcal{I}| \times n}, \Sigma_{n \times n}$ and use low-rank approximation with parameter $k$ such that $P = U_k \Sigma_k^{1/2}$ and $Q = V_k \Sigma_k^{1/2}$ and $r_{ui} = p_u q_i^T$
 \end{itemize}
@@ -102,8 +102,8 @@
 \begin{itemize}
     \item VAE for collaborative filtering
     \item users are represented as binary vectors (interaction with item (does not) exist)
-    \item regular VAE loss -> reconstruct input vector and use isotropic gaussian as prior
-    \item At inference: encode user history and decode latent representation -> after dropping all items with which the user already interacted, select item with highest output score
+    \item regular VAE loss $\rightarrow$ reconstruct input vector and use isotropic gaussian as prior
+    \item At inference: encode user history and decode latent representation $\rightarrow$ after dropping all items with which the user already interacted, select item with highest output score
     \item Advantages
     \begin{itemize}
         \item All advantages that come from DL: powerful flexible, scalable etc.

@@ -37,8 +37,8 @@
 	\end{figure}
 	\item document $d$ and query $q$ (containing binary scores) can be encoded by:
 	\begin{align*}
-		\hat{d} = \sigma_k^{-1} U_k^T d \\
-		\hat{q} = \sigma_k^{-1} U_k^T q \\
+		\hat{d} = \Sigma_k^{-1} U_k^T d \\
+		\hat{q} = \Sigma_k^{-1} U_k^T q \\
 	\end{align*}
 	\item The similarity between documents/queries can be calculated by cosine similarity (dot product) between their new embeddings in $X'$. Furthermore, we can also compute the similarity between terms by using the rows.
 	\item Choice of $k$:
@@ -74,7 +74,7 @@
 		\caption{Example of document representation in pLSA}
 		\label{img:semantic_matching_pLSA_example}
 	\end{figure}
-	\item For semantic matching, we calculate the cosine similarity between the topic distributions of the query and the document.
+	\item For semantic matching, we calculate the KL divergence between the topic distributions of the query and the document or use the query likelihood of either document given query or query given document.
 	\item pLSA can have problems with stop words (common words that occur in every document frequently like "the" or "and"). To prevent that, we summarize all stop words in a separate background topic model which is equally shared by all docs. Before generating a word, we toss a biased coin to decide whether to retrieve a word from the background or standard topic model. Note that in matching, these stop words are masked out by that
 \end{itemize}
 \subsubsection{Retrieving distributions}
